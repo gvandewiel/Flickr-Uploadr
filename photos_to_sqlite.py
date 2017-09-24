@@ -87,14 +87,14 @@ class Flickr_To_SQLite:
 		print('Flickr2SQLite: Starting Database cursor')
 		self.cursor = cursor
 		print('Flickr2SQLite: Create database tables...')
-		cursor.execute("CREATE TABLE IF NOT EXISTS photos(Id INT, Title TEXT, md5 TEXT, sha1 TEXT, public INT, friend INT, family INT)")
+		cursor.execute("CREATE TABLE IF NOT EXISTS photos(Id INT, Title TEXT, md5 TEXT, sha1 TEXT, public INT, friend INT, family INT, date_taken TEXT)")
 		cursor.execute("CREATE TABLE IF NOT EXISTS albums(Id INT, Title TEXT, photos INT, videos INT)")
 
 	def update_sqlite(self):
 		self.cursor.execute("DROP TABLE IF EXISTS photos")
 		self.cursor.execute("DROP TABLE IF EXISTS albums")
 
-		self.cursor.execute("CREATE TABLE photos(Id INT, Title TEXT, md5 TEXT, sha1 TEXT, public INT, friend INT, family INT)")
+		self.cursor.execute("CREATE TABLE photos(Id INT, Title TEXT, md5 TEXT, sha1 TEXT, public INT, friend INT, family INT, date_taken TEXT)")
 		self.cursor.execute("CREATE TABLE albums(Id INT, Title TEXT, photos INT, videos INT)")
 		self.connection.commit()
 
@@ -157,11 +157,15 @@ class Flickr_To_SQLite:
 	def write_photo_to_album_db(self,album_id,photo_element):
 		id = photo_element.attrib['id']
 		title = photo_element.attrib['title']
+
+		pdt = datetime.strptime(photo_element.attrib['datetaken'],'%Y-%m-%d %H:%M:%S')
+		date_taken = '{:02d}{:02d}{:02d}{:02d}{:02d}{:02d}'.format(pdt.year,pdt.month,pdt.day,pdt.hour,pdt.minute,pdt.second)
+
 		#if self.cursor == False:
 		#	return (id,)
 		#else:
 		#	self.cursor.execute("INSERT INTO \'"+str(album_id)+"\' VALUES (?)",(id,))
-		self.cursor.execute("INSERT INTO \'"+str(album_id)+"\' VALUES (?)",(id,))
+		self.cursor.execute("INSERT INTO \'"+str(album_id)+"\' VALUES (?,?)",(id,date_taken))
 
 	def write_album_to_db(self,set_element):
 		id = set_element.attrib['id']
@@ -180,7 +184,7 @@ class Flickr_To_SQLite:
 	def photos_in_albums(self,album_id):
 		data=[]
 		self.cursor.execute("DROP TABLE IF EXISTS \'"+str(album_id)+"\'")
-		self.cursor.execute("CREATE TABLE \'"+str(album_id)+"\' (Id INT)")
+		self.cursor.execute("CREATE TABLE \'"+str(album_id)+"\' (Id INT, date_taken TEXT)")
 		total_set_photos = int(self.flickr.photosets_getPhotos(photoset_id=album_id, per_page="1",page="1", media="all").getchildren()[0].attrib['total'])
 		
 		# page number
@@ -190,7 +194,7 @@ class Flickr_To_SQLite:
 		sp_cnt = 0
 
 		while sp_cnt < total_set_photos:
-			photos = self.flickr.photosets_getPhotos(photoset_id=album_id, per_page="500",page=spp, media="all" ,extras="machine_tags")
+			photos = self.flickr.photosets_getPhotos(photoset_id=album_id, per_page="500",page=spp, media="all" ,extras="machine_tags, date_taken")
 			photo_elements = photos.getchildren()[0]
 			for p in photo_elements:
 				sp_cnt+=1
@@ -244,6 +248,7 @@ class Flickr_To_SQLite:
 			try:
 				id = photo_element.attrib['id']
 				title = photo_element.attrib['title']
+
 				try:
 					machine_tags=photo_element.attrib['machine_tags'].split(' ')
 					if 'checksum:md5=' in machine_tags[0]:
@@ -281,13 +286,18 @@ class Flickr_To_SQLite:
 					self.q.add_to_queue(g_msg="The SHA1sum ('"+sha1+"') was malformed.\n\nIt must be 40 letters long, each one of 0-9 or a-f.")
 					_, sha1 = self.download_flickr_photo(id)
 					self.q.add_to_queue(sha1=sha1)
-				print('Setting data tuple with id,title,md5,sha1')
-				data = (id,title,md5,sha1,1,0,0)
+
+				pdt = datetime.strptime(photo_element.attrib['datetaken'],'%Y-%m-%d %H:%M:%S')
+				date_taken = '{:02d}{:02d}{:02d}{:02d}{:02d}{:02d}'.format(pdt.year,pdt.month,pdt.day,pdt.hour,pdt.minute,pdt.second)
+				print('date_taken = {}'.format(date_taken))
+
+				print('Setting data tuple with id,title,md5,sha1,date_taken')
+				data = (id,title,md5,sha1,1,0,0,date_taken)
 				#if self.cursor == False:
 				#	return data
 				#else:
 				print('writing data into DB')
-				self.cursor.execute("INSERT INTO photos VALUES (?,?,?,?,?,?,?)",data)
+				self.cursor.execute("INSERT INTO photos VALUES (?,?,?,?,?,?,?,?)",data)
 			except:
 				print("\nError occurd, propbaly a TimeoutError")
 				print("Waiting for 60 seconds")

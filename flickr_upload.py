@@ -190,21 +190,14 @@ def callback(progress):
     print('uploading photo '+progress+'%')
 
 def sort_album_photos(album_id):
-  photos=dict()
-  sorted_id = list()
-  '2010-08-04 19:07:16'
-  for photo in flickr.walk_set(album_id, extras='date_taken',sort ='date-taken-asc',per_page=500):
-    pdt = datetime.strptime(photo.get('datetaken'),'%Y-%m-%d %H:%M:%S')
-    sdt = '{:02d}{:02d}{:02d}{:02d}{:02d}{:02d}'.format(pdt.year,pdt.month,pdt.day,pdt.hour,pdt.minute,pdt.second)
-    #print(pdt)
-    photos[pdt] = photo.get('id')
-  
-  for key in sorted(photos):
-    print('Date: {} ==> {}'.format(key,photos[key]))
-    sorted_id.append(photos[key])
+  global cur
+  cur.execute("SELECT id FROM \'"+str(album_id)+"\' ORDER BY date_taken ASC")
+  id_list = cur.fetchall()
 
-  print('sorted_id:\n\t{}'.format(sorted_id))
-  
+  sorted_id = list()
+  for item in id_list:
+    sorted_id.append(item[0])
+
   sorted_ids = ','.join([str(x) for x in sorted_id])
   flickr.photosets.reorderPhotos(photoset_id=str(album_id),photo_ids=str(sorted_ids))
 
