@@ -39,64 +39,9 @@ from subprocess import Popen, PIPE
 # if not ('api_key' in configuration and 'api_secret' in configuration):
 #     print("Both api_key and api_secret must be defined in "+flickr_api_filename)
 
-class ProgressBar(object):
-    DEFAULT_BAR_LENGTH = 65
-    DEFAULT_CHAR_ON  = '='
-    DEFAULT_CHAR_OFF = ' '
-    fname = ''
-    
-    def __init__(self, end, start=0, screen=None):
-        self.end    = end
-        self.start  = start
-        self._barLength = self.__class__.DEFAULT_BAR_LENGTH
-        
-        self.stdscr = screen
-        self.stdscr.erase()
-
-        self.setLevel(self.start)
-        self._plotted = False
-
-    def setLevel(self, level):
-        self._level = level
-        if level < self.start:  self._level = self.start
-        if level > self.end:    self._level = self.end
-
-        self._ratio = float(self._level - self.start) / float(self.end - self.start)
-        self._levelChars = int(self._ratio * self._barLength)
-
-    def plotProgress(self):
-        self.stdscr.addstr(1, 0, "  %3i%% [%s%s]" %(
-            int(self._ratio * 100.0),
-            self.__class__.DEFAULT_CHAR_ON  * int(self._levelChars),
-            self.__class__.DEFAULT_CHAR_OFF * int(self._barLength - self._levelChars),))
-        self.stdscr.refresh()
-
-    def set_label(self,label,number):
-        self.stdscr.addstr(number, 0, '')
-        self.stdscr.refresh()
-        self.stdscr.addstr(number, 0, str(label))
-        self.stdscr.refresh()
-
-    def setAndPlot(self, level):
-        oldChars = self._levelChars
-        self.setLevel(level)
-        if (not self._plotted) or (oldChars != self._levelChars):
-            self.plotProgress()
-
-    def __add__(self, other):
-        assert type(other) in [float, int], "can only add a number"
-        self.setAndPlot(self._level + other)
-        return self
-    def __sub__(self, other):
-        return self.__add__(-other)
-    def __iadd__(self, other):
-        return self.__add__(other)
-    def __isub__(self, other):
-        return self.__add__(-other)
-
-    def __del__(self):
-        self.stdscr.erase()
-        sys.stdout.write("\n")
+checksum_pattern = "[0-9a-f]{32,40}"
+md5_machine_tag_prefix = "checksum:md5="
+sha1_machine_tag_prefix = "checksum:sha1="
 
 def md5sum(filename):
     return checksum(filename,"md5")
@@ -120,10 +65,6 @@ def checksum(filename, type, blocksize=65536):
     raise Exception("Output from "+type+"sum was unexpected: "+result)
   return m.group(1)
 
-checksum_pattern = "[0-9a-f]{32,40}"
-
-md5_machine_tag_prefix = "checksum:md5="
-sha1_machine_tag_prefix = "checksum:sha1="
 
 def base58(n):
     a='123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'

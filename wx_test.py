@@ -42,7 +42,7 @@ def startUpload(username='', root_dir='', subdir='', public=False, family=False,
     print('Thread objects currently alive: {}'.format(threading.activeCount()))
 
     print('Starting thread1')
-    thread1.daemon = True
+    #thread1.daemon = True
     thread1.start()
     print('Thread objects currently alive: {}'.format(threading.activeCount()))
 
@@ -73,7 +73,7 @@ def startUpdate(username=''):
         thread1 = threading.Thread(target=flickr_upload.start_upload, name='Thread-1', kwargs=nargs)
 
         print('starting thread')
-        thread1.daemon = True
+        #thread1.daemon = True
         thread1.start()
         print('Thread objects currently alive: {}'.format(threading.activeCount()))
 
@@ -160,11 +160,38 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_CHECKBOX, self.onChecked, self.chkNewFamily)
         self.Bind(wx.EVT_CHECKBOX, self.onChecked, self.chkNewFriend)
 
+        self.Bind(wx.EVT_LISTBOX_DCLICK, self.onDoubleclick, self.listBox1)
+
         #self.log = wx.TextCtrl(self.panel, wx.ID_ANY,     pos=(10, 150), size=(580,250), style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
 
         # redirect text here
         # redir=RedirectText(self.log)
         # sys.stdout=redir
+
+    def onDoubleclick(self, event):
+        global users
+        global root_dir
+        seldir = self.listBox1.GetStringSelection()
+
+        if seldir == '..':
+            root_dir = users[self.user.GetValue()]['root_dir']
+
+            self.dir.SetLabel(root_dir)
+            root_dir = root_dir
+
+        else:
+            # set new root_dir
+            root_dir = os.path.join(root_dir, seldir, '')
+
+            # Update label
+            self.dir.SetLabel(root_dir)
+
+        # Update list of folder
+        dirs = sorted([f for f in os.listdir(root_dir) if not f.startswith('.')], key=lambda f: f.lower())
+
+        # Add move folder up icon
+        dirs = ['..'] + dirs
+        self.listBox1.Set(dirs)
 
     def onChecked(self, event):
         chkbx = event.GetEventObject()
@@ -253,6 +280,8 @@ class MainFrame(wx.Frame):
         thread2.start()
 
     def onLongRunDone(self):
+        global thread1
+        thread1.join()
         self.g_albums.SetValue(0)
         self.g_photos.SetValue(0)
 

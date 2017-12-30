@@ -97,60 +97,6 @@ def normalize(text):
     return unicodedata.normalize("NFKD", text.casefold())
 
 
-class FileWithCallback(object):
-    """Summary
-
-    Attributes:
-        callback (TYPE): Description
-        file (TYPE): Description
-        fileno (TYPE): Description
-        len (TYPE): Description
-        tell (TYPE): Description
-    """
-
-    def __init__(self, filename, callback):
-        """Summary
-
-        Args:
-            filename (TYPE): Description
-            callback (TYPE): Description
-        """
-        self.file = open(filename, 'rb')
-        self.callback = callback
-        # the following attributes and methods are required
-        self.len = os.path.getsize(filename)
-        self.fileno = self.file.fileno
-        self.tell = self.file.tell
-
-    def read(self, size):
-        """Summary
-
-        Args:
-            size (TYPE): Description
-
-        Returns:
-            TYPE: Description
-        """
-        if self.callback:
-            self.callback(self.tell() * 100 // self.len)
-        return self.file.read(size)
-
-
-def callback(progress):
-    """Summary
-
-    Args:
-        progress (TYPE): Description
-    """
-    global q
-    q.add_to_queue(upload_progress=progress)
-
-    if progress != 100:
-        print('uploading photo {}\r'.format(progress), end="")
-    else:
-        print('uploading photo {}\r'.format(progress))
-
-
 def init(user=None, queue=None):
     """Summary
 
@@ -470,6 +416,110 @@ def Order_Photos_Albums(user=None, queue=None, sort_photos=False):
 ###############################################################################
 
 
+class FileWithCallback(object):
+    """Summary
+
+    Attributes:
+        callback (TYPE): Description
+        file (TYPE): Description
+        fileno (TYPE): Description
+        len (TYPE): Description
+        tell (TYPE): Description
+    """
+
+    def __init__(self, filename, callback):
+        """Summary
+
+        Args:
+            filename (TYPE): Description
+            callback (TYPE): Description
+        """
+        self.file = open(filename, 'rb')
+        self.callback = callback
+        # the following attributes and methods are required
+        self.len = os.path.getsize(filename)
+        self.fileno = self.file.fileno
+        self.tell = self.file.tell
+
+    def read(self, size):
+        """Summary
+
+        Args:
+            size (TYPE): Description
+
+        Returns:
+            TYPE: Description
+        """
+        if self.callback:
+            self.callback(self.tell() * 100 // self.len)
+        return self.file.read(size)
+
+    def __del__(self):
+        """Destructor.
+
+        Close the opened file in __init__
+        """
+        self.file.close()
+        self.file = None
+
+
+def callback(progress):
+    """Summary
+
+    Args:
+        progress (TYPE): Description
+    """
+    global q
+    q.add_to_queue(upload_progress=progress)
+
+    if progress != 100:
+        print('\tuploading photo {}\r'.format(progress), end="")
+    else:
+        print('\tuploading photo {}\r'.format(progress))
+
+
+def upload_file(flickr, fname, file, tags, public, family, friends, queue, photo_ext, video_ext):
+    """Check filesize before starting upload.
+
+    Max filesize for pictures = 200 MB
+    Max filesize for videos   =   1 GB
+    """
+    photo_id = True
+
+    b = os.path.getsize(fname)
+    print('\tfilesize = ~{:.2f} MB'.format(b // 1000000))
+
+    if normalize(file.rsplit(".",1)[-1]) in photo_ext and b >= 209715200:
+        print('\t\tFilesize of photo exceeds Flickr limit (200 MB)')
+        queue.add_to_queue(msg1='Upload failed.',
+                           msg2='Filesize of photo exceeds Flickr limit (200 MB)'
+                           )
+        photo_id = False
+
+    if normalize(file.rsplit(".",1)[-1]) in video_ext and b >= 1073741824:
+        print('\t\tFilesize of video exceeds Flickr limit (1 GB)')
+        queue.add_to_queue(msg1='Upload failed.',
+                           msg2='Filesize of video exceeds Flickr limit (1 GB)'
+                           )
+        photo_id = False
+
+    if photo_id is True:
+        fileobj = FileWithCallback(fname, callback)
+        result = flickr.upload(filename=fname,
+                               fileobj=fileobj,
+                               title=file,
+                               tags=tags,
+                               is_public=int(public),
+                               is_family=int(family),
+                               is_friend=int(friends))
+
+        photo_id = result.getchildren()[0].text
+        fileobj = None
+        result = None
+    return photo_id
+
+
+@profile
 def start_upload(main_dir='', user=None, public=False, family=False, friends=False, update=False, queue=None):
     """Summary.
 
@@ -524,7 +574,9 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
 
         # Start of dirloop
         for dirname, subdirlist, fileList in os.walk(main_dir, topdown=False):
-            FileEXT = '.*\.gif|.*\.png|.*\.jpg|.*\.jpeg|.*\.tif|.*\.tiff|.*\.mov|.*\.avi|.*\.mp4'
+            #FileEXT = '.*\.gif|.*\.png|.*\.jpg|.*\.jpeg|.*\.tif|.*\.tiff|.*\.mov|.*\.avi|.*\.mp4'
+            photo_ext = '.*\.gif|.*\.png|.*\.jpg|.*\.jpeg|.*\.tif|.*\.tiff'
+            video_ext = '.*\.mov|.*\.avi|.*\.mp4'
             mcnt += 1
             q.add_to_queue(album=os.path.basename(dirname),
                            total_albums=mmax,
@@ -533,7 +585,7 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
 
             # Count images in folder (check if empty)
             photo_list = []
-            img_cnt = len([name for name in fileList if not name.startswith(".") and re.match(FileEXT, normalize(name))])
+            img_cnt = len([name for name in fileList if not name.startswith(".") and (re.match(photo_ext, normalize(name)) or re.match(video_ext, normalize(name)))])
 
             # Check if the folder is NOT hidden and contains image files
             if (not re.match('^\.', os.path.basename(dirname)) and
@@ -547,7 +599,7 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
                     title = os.path.basename(dirname)
 
                 # Message in CLI to show which folder is being processed
-                print('\n\033[92mProcessing \033[0m{} ({} files)'.format(title, img_cnt))
+                print('\n\033[1m\033[92mProcessing: \033[0m{} ({} files)'.format(title, img_cnt))
                 q.add_to_queue(total_images=img_cnt)
 
                 # Find album id (if any)
@@ -564,9 +616,8 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
                 # Loop over all files in directory
                 pcnt = 0
                 for file in fileList:
-                    # Exclude hidden files and only upload image files
-                    # if not file.startswith(".") and re.match(FileEXT, file):
-                    if not file.startswith(".") and normalize(file.rsplit(".",1)[-1]) in FileEXT:
+                    # Exclude hidden files and only upload image and video files
+                    if not file.startswith(".") and (normalize(file.rsplit(".",1)[-1]) in photo_ext or normalize(file.rsplit(".",1)[-1]) in video_ext):
                         # Set full path of image file
                         fname = os.path.join(dirname, file)
                         real_sha1 = sha1sum(fname)
@@ -608,51 +659,32 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
                             # Start upload of new photo
                             while True:
                                 try:
-                                    print('Trying to upload ' + file + ' to Flickr...')
-
-                                    fileobj = FileWithCallback(fname, callback)
-                                    result = flickr.upload(filename=fname,
-                                                           fileobj=fileobj,
-                                                           title=file,
-                                                           tags=tags,
-                                                           callback=callback,
-                                                           is_public=int(public),
-                                                           is_family=int(family),
-                                                           is_friend=int(friends))
-                                    """
-                                    result = flickr.upload(filename=fname,
-                                                           title=file,
-                                                           tags=tags,
-                                                           callback=callback,
-                                                           is_public=int(public),
-                                                           is_family=int(family),
-                                                           is_friend=int(friends))
-                                    """
+                                    print('\tTrying to upload ' + file + ' to Flickr...')
+                                    photo_id = upload_file(flickr, fname, file, tags, public, family, friends, q, photo_ext, video_ext)
 
                                 except requests.exceptions.Timeout:
                                     q.add_to_queue(msg1='Timeout occurd during upload',
                                                    msg2='Sleeping for 60 seconds...'
                                                    )
-                                    print('Timeout occurd during upload')
-                                    print('Sleeping for 60 seconds...')
+                                    print('\tTimeout occurd during upload')
+                                    print('\tSleeping for 60 seconds...')
                                     sleep(60)
                                     continue
                                 break
 
-                            photo_id = result.getchildren()[0].text
-                            print('Photo uploaded to Flickr with id: {}'.format(photo_id))
-                            q.add_to_queue(msg1='Photo uploaded to Flickr',
-                                           msg2='')
+                            if photo_id is not False:
+                                print('\tPhoto uploaded to Flickr with id: {}'.format(photo_id))
+                                q.add_to_queue(msg1='Photo uploaded to Flickr',
+                                               msg2='')
 
-                            # Add photo to local database
-                            cur.execute("INSERT INTO photos VALUES (?,?,?,?,?,?,?,?)", (photo_id, fname, real_md5, real_sha1, int(public), int(friends), int(family), datetaken))
-                            con.commit()
+                                # Add photo to local database
+                                cur.execute("INSERT INTO photos VALUES (?,?,?,?,?,?,?,?)", (photo_id, fname, real_md5, real_sha1, int(public), int(friends), int(family), datetaken))
+                                con.commit()
 
-                            photo_list = add_to_album(photo_id, datetaken, photo_list)
+                                photo_list = add_to_album(photo_id, datetaken, photo_list)
                         else:
                             # Photo already uploaded
-                            cur.execute(
-                                "SELECT public,friend,family FROM photos WHERE id=\'" + str(photo_id) + "\'")
+                            cur.execute("SELECT public,friend,family FROM photos WHERE id=\'" + str(photo_id) + "\'")
                             db_public, db_friend, db_family = cur.fetchone()
 
                             photo_list = add_to_album(photo_id, datetaken, photo_list)
@@ -662,13 +694,12 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
 
                 # Create or update album
                 if album_id is False:
-                    print('album_id = False')
                     primary_photo_id = photo_list[0][0]
                     album_id = flickr.photosets.create(title=title,
                                                        description="",
                                                        primary_photo_id=primary_photo_id).getchildren()[0].attrib['id']
 
-                    print('Creating new album')
+                    print('\tCreating album "{}"'.format(title))
                     q.add_to_queue(msg1='Creating new album',
                                    msg2='',
                                    album=title,
@@ -680,7 +711,7 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
                                    sha1=''
                                    )
 
-                    print('Creating table "{}" with all photo_id\'s'.format(album_id))
+                    print('\tCreating table "{}" with all photo_id\'s'.format(album_id))
                     cur.execute("DROP TABLE IF EXISTS \'" + str(album_id) + "\'")
                     cur.execute("CREATE TABLE \'" + str(album_id) + "\' (Id INT, date_taken TEXT)")
 
@@ -688,7 +719,7 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
                     cur.executemany("INSERT INTO \'" + str(album_id) + "\' (Id, date_taken) VALUES (?, ?)", photo_list)
 
                     # Add album to local db albums
-                    print('Add "{}" to albums table'.format(album_id))
+                    print('\tAdd "{}" to albums table'.format(album_id))
                     cur.execute("INSERT INTO albums VALUES (?,?,?,?)",
                                 (album_id, title, len(photo_list), 0))
 
@@ -698,7 +729,7 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
                 # Catching error when the album exists in the local DB but not on Flickr.
                 while True:
                     try:
-                        print('\tUpdating album_id "{}"'.format(album_id))
+                        print('\tUpdating album with id: "{}"'.format(album_id))
                         q.add_to_queue(msg1='Updating album',
                                        msg2='',
                                        album=title,
@@ -766,7 +797,7 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
                 sort_album_photos(album_id)
                 q.clear()
             else:
-                print('\n\033[91m\033[1mSkipped folder\033[0m {}'.format(os.path.basename(dirname)))
+                print('\n\033[91m\033[1mSkipped folder: \033[0m {}'.format(os.path.basename(dirname)))
         #### End of dir loop ####
         print('Sorting all albums')
         q.add_to_queue(msg1='Sorting all albums')
