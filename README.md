@@ -17,3 +17,4 @@ api_key: <API_KEY>
 api_secret: <API_SECRET>
 root_dir: <ROOT DIR without trailing slash>
 ```
+The program makes use of the eel module to make use of Google Chrome for the user interface. The userface is used to start/stop the Uploadr and monitor the progress of the processed photos, ablums and the upload of new photos.
