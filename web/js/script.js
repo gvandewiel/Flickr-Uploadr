@@ -58,6 +58,17 @@ function js_status(data) {
 	};
 }
 
+function get_user_list() {
+	data = eel.get_user(username="")(pop_list);
+}
+
+function pop_list(data) {
+	$('#username').empty();
+	$.each(data, function(i,p) {
+		$('#username').append($('<option></option>').val(p).html(p));
+	});	
+}
+
 function get_user_config(username) {
 	data = eel.get_user(username)(pop_form);
 }
