@@ -4,7 +4,7 @@ import tempfile
 from subprocess import call, Popen, PIPE
 from datetime import datetime
 import sqlite3 as sqlite
-from . import common as cf
+from . import common
 import os
 
 
@@ -169,13 +169,13 @@ class FlickrDatabase():
 
     def check_hash(self, hash, type):
         if type == 'md5':
-            if not re.search('^' + cf.CHECKSUM_PATTERN + '$', hash):
+            if not re.search('^' + common.CHECKSUM_PATTERN + '$', hash):
                 self.logger.info("Malformed MD5")
                 self.progress = self.out_dict.add_to_queue(msg1="The MD5sum ('" + hash + "') was malformed.\n\nIt must be 32 letters long, each one of 0-9 or a-f.")
                 return False
 
         if type == 'sha1':
-            if not re.search('^' + cf.CHECKSUM_PATTERN + '$', hash):
+            if not re.search('^' + common.CHECKSUM_PATTERN + '$', hash):
                 self.logger.info("Malformed SHA1")
                 self.progress = self.out_dict.add_to_queue(msg1="The SHA1sum ('" + hash + "') was malformed.\n\nIt must be 40 letters long, each one of 0-9 or a-f.")
                 return False
@@ -183,7 +183,7 @@ class FlickrDatabase():
     def download_flickr_photo(self, photo_id, temp=True, folder=''):
         self.progress = self.out_dict.add_to_queue(msg1='Downloading photo to determine checksum...')
         info_result = self.flickr.photos_getInfo(photo_id=photo_id)
-        farm_url = cf.info_to_url(info_result, 'o')
+        farm_url = common.info_to_url(info_result, 'o')
 
         # Make temporary file to download photo into
         if temp:
@@ -197,12 +197,12 @@ class FlickrDatabase():
             out, err = p.communicate()
 
             # Calculate checksums
-            real_md5sum = cf.md5sum(f.name)
-            real_sha1sum = cf.sha1sum(f.name)
+            real_md5sum = common.md5sum(f.name)
+            real_sha1sum = common.sha1sum(f.name)
 
             # Add tags to photos
             for t in info_result.getchildren()[0].find('tags'):
-                if re.search('^' + cf.MD5_MACHINE_TAG_PREFIX, t.attrib['raw']):
+                if re.search('^' + common.MD5_MACHINE_TAG_PREFIX, t.attrib['raw']):
                     m_md5 = t.attrib['id']
 
                     self.logger.info("Removing old MD5 tag (" + m_md5 + ")")
@@ -210,16 +210,16 @@ class FlickrDatabase():
 
                     self.logger.info("Setting MD5 tag = " + real_md5sum)
                     self.flickr.photos.addTags(photo_id=photo_id,
-                                               tags=cf.MD5_MACHINE_TAG_PREFIX + real_md5sum)
+                                               tags=common.MD5_MACHINE_TAG_PREFIX + real_md5sum)
 
-                if re.search('^' + cf.SHA1_MACHINE_TAG_PREFIX, t.attrib['raw']):
+                if re.search('^' + common.SHA1_MACHINE_TAG_PREFIX, t.attrib['raw']):
                     m_sha1 = t.attrib['id']
                     self.logger.info("Removing old SHA1 tag (" + m_sha1 + ")")
                     self.flickr.photos.removeTag(tag_id=m_sha1)
 
                     self.logger.info("Setting SHA1 tag = " + real_sha1sum)
                     self.flickr.photos.addTags(photo_id=photo_id,
-                                               tags=cf.SHA1_MACHINE_TAG_PREFIX + real_sha1sum)
+                                               tags=common.SHA1_MACHINE_TAG_PREFIX + real_sha1sum)
 
             # Remove temporary file
             self.logger.info("Removing temporary file.")
@@ -231,7 +231,7 @@ class FlickrDatabase():
                 os.makedirs(folder)
 
             file = photo_id
-            ext = cf.normalize(farm_url.rsplit(".", 1)[-1])
+            ext = common.normalize(farm_url.rsplit(".", 1)[-1])
             filename = os.path.join(folder, '{file}.{ext}'.format(file=file, ext=ext))
 
             self.logger.info("Downloading photo from flickr")

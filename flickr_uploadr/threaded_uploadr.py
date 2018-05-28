@@ -11,7 +11,7 @@ import os
 import re
 from .output_dict import OutDict
 from .database import FlickrDatabase
-from . import common as cf
+from . import common
 import threading
 import configparser
 
@@ -195,8 +195,8 @@ class Uploadr(threading.Thread):
 
     def find_flickr_photo(self, md5, write_to_db=True):
         # Check flickr database
-        if cf.MD5_MACHINE_TAG_PREFIX not in md5:
-            md5 = cf.MD5_MACHINE_TAG_PREFIX + md5
+        if common.MD5_MACHINE_TAG_PREFIX not in md5:
+            md5 = common.MD5_MACHINE_TAG_PREFIX + md5
 
         photo_list = self.flickr.photos_search(user_id="me",
                                                tags=str(md5),
@@ -258,12 +258,12 @@ class Uploadr(threading.Thread):
 
         data_dict['photo_id'] = photo.attrib['id']
         data_dict['photo_title'] = photo.attrib['title']
-        data_dict['md5'] = machine_tags[0].replace(cf.MD5_MACHINE_TAG_PREFIX, '')
-        data_dict['sha1'] = machine_tags[1].replace(cf.SHA1_MACHINE_TAG_PREFIX, '')
+        data_dict['md5'] = machine_tags[0].replace(common.MD5_MACHINE_TAG_PREFIX, '')
+        data_dict['sha1'] = machine_tags[1].replace(common.SHA1_MACHINE_TAG_PREFIX, '')
         data_dict['public'] = photo.attrib['ispublic']
         data_dict['friend'] = photo.attrib['isfriend']
         data_dict['family'] = photo.attrib['isfamily']
-        data_dict['date_taken'] = cf.flickr_date_taken(photo)
+        data_dict['date_taken'] = common.flickr_date_taken(photo)
         return data_dict
 
     def add_to_album(self, data_dict, photo_dict):
@@ -376,7 +376,7 @@ class Uploadr(threading.Thread):
         b = os.path.getsize(fname)
         self.logger.debug('filesize = ~{:.2f} MB'.format(b // 1000000))
 
-        if cf.normalize(file.rsplit(".", 1)[-1]) in self.photo_ext and b >= 209715200:
+        if common.normalize(file.rsplit(".", 1)[-1]) in self.photo_ext and b >= 209715200:
             self.logger.warning('Upload of "{}" failed'.format(file))
             self.logger.warning('Filesize of photo exceeds Flickr limit (200 MB)')
 
@@ -385,7 +385,7 @@ class Uploadr(threading.Thread):
             photo_id = False
             photo = False
 
-        if cf.normalize(file.rsplit(".", 1)[-1]) in self.video_ext and b >= 1073741824:
+        if common.normalize(file.rsplit(".", 1)[-1]) in self.video_ext and b >= 1073741824:
             self.logger.warning('Upload of "{}" failed'.format(file))
             self.logger.warning('Filesize of video exceeds Flickr limit (1 GB)')
 
@@ -399,7 +399,7 @@ class Uploadr(threading.Thread):
             self.logger.info('Uploading "{}"'.format(file))
             self.progress = self.out_dict.add_to_queue(msg1='Uploading {}'.format(file))
 
-            fileobj = cf.FileWithCallback(fname, self.callback)
+            fileobj = common.FileWithCallback(fname, self.callback)
 
             self.flickr.upload(filename=fname,
                                fileobj=fileobj,
@@ -433,13 +433,13 @@ class Uploadr(threading.Thread):
     def check_folder(self, dirname='', filelist=''):
         # Check folder is hidden (starts with .)
         b_hidden = re.match('^\.', os.path.basename(dirname))
-        b_exclude = cf.normalize(os.path.basename(dirname)) in self.exclude_folders
+        b_exclude = common.normalize(os.path.basename(dirname)) in self.exclude_folders
 
         # Make list of files to be uploaded
         img_list = [name for name in filelist
                     if not name.startswith(".") and
-                    (cf.normalize(name.rsplit(".", 1)[-1]) in self.photo_ext or
-                     cf.normalize(name.rsplit(".", 1)[-1]) in self.video_ext)]
+                    (common.normalize(name.rsplit(".", 1)[-1]) in self.photo_ext or
+                     common.normalize(name.rsplit(".", 1)[-1]) in self.video_ext)]
 
         img_cnt = len(img_list)
 
@@ -463,8 +463,8 @@ class Uploadr(threading.Thread):
             # # print out excluded files
             for file in filelist:
                 if file.startswith(".") or \
-                    (cf.normalize(file.rsplit(".", 1)[-1]) not in self.photo_ext and
-                     cf.normalize(file.rsplit(".", 1)[-1]) not in self.video_ext):
+                    (common.normalize(file.rsplit(".", 1)[-1]) not in self.photo_ext and
+                     common.normalize(file.rsplit(".", 1)[-1]) not in self.video_ext):
                     self.logger.debug('Skipped file: {}'.format(file))
                     pass
 
@@ -569,21 +569,21 @@ class Uploadr(threading.Thread):
         info_result = self.flickr.photos_getInfo(photo_id=photo_id)
 
         for t in info_result.getchildren()[0].find('tags'):
-            if re.search('^' + cf.MD5_MACHINE_TAG_PREFIX, t.attrib['raw']):
+            if re.search('^' + common.MD5_MACHINE_TAG_PREFIX, t.attrib['raw']):
                 m_md5 = t.attrib['id']
                 self.flickr.photos.removeTag(tag_id=m_md5)
 
-            if re.search('^' + cf.SHA1_MACHINE_TAG_PREFIX, t.attrib['raw']):
+            if re.search('^' + common.SHA1_MACHINE_TAG_PREFIX, t.attrib['raw']):
                 m_sha1 = t.attrib['id']
 
                 self.logger.debug("Removing old SHA1 tag (" + m_sha1 + ")")
                 self.flickr.photos.removeTag(tag_id=m_sha1)
 
         self.logger.debug("Setting MD5 tag = " + real_md5sum)
-        self.flickr.photos.addTags(photo_id=photo_id, tags=cf.MD5_MACHINE_TAG_PREFIX + real_md5sum)
+        self.flickr.photos.addTags(photo_id=photo_id, tags=common.MD5_MACHINE_TAG_PREFIX + real_md5sum)
 
         self.logger.debug("Setting SHA1 tag = " + real_sha1sum)
-        self.flickr.photos.addTags(photo_id=photo_id, tags=cf.SHA1_MACHINE_TAG_PREFIX + real_sha1sum)
+        self.flickr.photos.addTags(photo_id=photo_id, tags=common.SHA1_MACHINE_TAG_PREFIX + real_sha1sum)
 
     def update_flickr_hashes(self):
         local_dict = self.db.retrieve_album_photos('local')
@@ -688,12 +688,12 @@ class Uploadr(threading.Thread):
                         fname = os.path.join(dirname, file)
 
                         # Calculate checksum of file
-                        real_md5 = cf.md5sum(fname)
-                        real_sha1 = cf.sha1sum(fname)
+                        real_md5 = common.md5sum(fname)
+                        real_sha1 = common.sha1sum(fname)
 
                         # Generate machine tags
-                        tags = '{md5_prefix}{md5} {sha1_prefix}{sha1}'.format(md5_prefix=cf.MD5_MACHINE_TAG_PREFIX,
-                                                                              sha1_prefix=cf.SHA1_MACHINE_TAG_PREFIX,
+                        tags = '{md5_prefix}{md5} {sha1_prefix}{sha1}'.format(md5_prefix=common.MD5_MACHINE_TAG_PREFIX,
+                                                                              sha1_prefix=common.SHA1_MACHINE_TAG_PREFIX,
                                                                               md5=real_md5,
                                                                               sha1=real_sha1)
 
@@ -872,8 +872,8 @@ class Uploadr(threading.Thread):
                         fname = os.path.join(dirname, file)
 
                         # Calculate checksum of file
-                        real_md5 = cf.md5sum(fname)
-                        real_sha1 = cf.sha1sum(fname)
+                        real_md5 = common.md5sum(fname)
+                        real_sha1 = common.sha1sum(fname)
 
                         self.logger.info('\t{}'.format(fname))
 
