@@ -11,7 +11,7 @@ import os
 import re
 from .output_dict import OutDict
 from .database import FlickrDatabase
-import common as cf
+from . import common as cf
 import threading
 import configparser
 

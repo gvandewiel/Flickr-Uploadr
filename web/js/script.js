@@ -50,8 +50,8 @@ function js_status(data) {
 		$('#sha1').html(data.sha1);
 		$('#album_title').html(data.album);
 		$('#fname').html(data.filename);
-		$('#pba_text').html('Album: '+data.actual_album+' of '+data.total_albums);            
-		$('#pbp_text').html('Photo: '+data.actual_image+' of '+data.total_images);            
+		$('#pba_text').html('Album: '+data.actual_album+' of '+data.total_albums);
+		$('#pbp_text').html('Photo: '+data.actual_image+' of '+data.total_images);
 		$('#pb_albums').css('width', data.pb_albums+'%').attr('aria-valuenow', data.pb_albums).html('<span>'+data.actual_album+' of '+data.total_albums+'</span>');
 		$('#pb_photos').css('width', data.pb_photos+'%').attr('aria-valuenow', data.pb_photos).html('<span>'+data.actual_image+' of '+data.total_images+'</span>');
 		$('#pb_upload').css('width', data.upload_progress+'%').attr('aria-valuenow', data.upload_progress).html('<span>'+data.upload_progress+'%'+'</span>');
@@ -64,6 +64,7 @@ function get_user_list() {
 
 function pop_list(data) {
 	$('#username').empty();
+  $('#username').append($('<option></option>').val('').html('- Please make a selection -'));
 	$.each(data, function(i,p) {
 		$('#username').append($('<option></option>').val(p).html(p));
 	});	
@@ -73,7 +74,7 @@ function get_user_config(username) {
 	data = eel.get_user(username)(pop_form);
 }
 
-function pop_form(data) {	
+function pop_form(data) {
 	$('#main_dir').val(data.main_dir);
 	$('#main_dir').prop('disabled', true);
 	//Populate subdir dropdown
@@ -108,7 +109,7 @@ $("#username").on("change", function() {
 $( "#setup_form" ).submit(function( event ) {
 	event.preventDefault();
 	data = getFormObj('setup_form');
-	
+
 	$('#setup').collapse("hide");
     $('#status').collapse("show");
     $('#progress').collapse("show");

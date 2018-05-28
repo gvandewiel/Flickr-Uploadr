@@ -4,7 +4,7 @@ import tempfile
 from subprocess import call, Popen, PIPE
 from datetime import datetime
 import sqlite3 as sqlite
-import common as cf
+from . import common as cf
 import os
 
 
