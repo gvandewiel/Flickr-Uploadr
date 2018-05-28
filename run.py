@@ -108,7 +108,9 @@ def get_user(username):
     if len(config.sections()) is 0:
         raise ValueError('No configuration provided in file')
     configuration = {}
-    if username in config.sections():
+    if username == "":
+        configuration = list(config.sections())
+    elif username in config.sections():
         configuration['api_key'] = config.get(username, 'api_key')
         configuration['api_secret'] = config.get(username, 'api_secret')
         configuration['main_dir'] = config.get(username, 'root_dir')
