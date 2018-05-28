@@ -489,14 +489,14 @@ def upload_file(flickr, fname, file, tags, public, family, friends, queue, photo
     b = os.path.getsize(fname)
     print('\tfilesize = ~{:.2f} MB'.format(b // 1000000))
 
-    if normalize(file.rsplit(".",1)[-1]) in photo_ext and b >= 209715200:
+    if normalize(file.rsplit(".", 1)[-1]) in photo_ext and b >= 209715200:
         print('\t\tFilesize of photo exceeds Flickr limit (200 MB)')
         queue.add_to_queue(msg1='Upload failed.',
                            msg2='Filesize of photo exceeds Flickr limit (200 MB)'
                            )
         photo_id = False
 
-    if normalize(file.rsplit(".",1)[-1]) in video_ext and b >= 1073741824:
+    if normalize(file.rsplit(".", 1)[-1]) in video_ext and b >= 1073741824:
         print('\t\tFilesize of video exceeds Flickr limit (1 GB)')
         queue.add_to_queue(msg1='Upload failed.',
                            msg2='Filesize of video exceeds Flickr limit (1 GB)'
@@ -617,7 +617,7 @@ def start_upload(main_dir='', user=None, public=False, family=False, friends=Fal
                 pcnt = 0
                 for file in fileList:
                     # Exclude hidden files and only upload image and video files
-                    if not file.startswith(".") and (normalize(file.rsplit(".",1)[-1]) in photo_ext or normalize(file.rsplit(".",1)[-1]) in video_ext):
+                    if not file.startswith(".") and (normalize(file.rsplit(".", 1)[-1]) in photo_ext or normalize(file.rsplit(".", 1)[-1]) in video_ext):
                         # Set full path of image file
                         fname = os.path.join(dirname, file)
                         real_sha1 = sha1sum(fname)

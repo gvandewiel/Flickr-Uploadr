@@ -11,6 +11,7 @@ from pprint import pprint
 
 from common import *
 
+
 class Flickr_To_SQLite:
 
     def __init__(self, flickr, connection, cursor, out_dict):

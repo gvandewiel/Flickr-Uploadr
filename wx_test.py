@@ -342,6 +342,7 @@ class MainFrame(wx.Frame):
                     wx.CallAfter(self.g_upl.SetValue, 0)
         wx.CallAfter(self.onLongRunDone)
 
+
 if __name__ == "__main__":
     #app = wx.PySimpleApp()
     app = wx.App()

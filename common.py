@@ -19,8 +19,8 @@ import re
 import hashlib
 from subprocess import Popen, PIPE
 
-#flickr_api_filename = os.path.join(os.environ['HOME'],'flickr-api')
-#if not os.path.exists(flickr_api_filename):
+# flickr_api_filename = os.path.join(os.environ['HOME'],'flickr-api')
+# if not os.path.exists(flickr_api_filename):
 #    print("You must put your Flickr API key and secret in "+flickr_api_filename)
 
 # configuration = {}
@@ -35,7 +35,7 @@ from subprocess import Popen, PIPE
 #         print("or of the form 'key = value'")
 #         sys.exit(1)
 #     continue
-# 
+#
 # if not ('api_key' in configuration and 'api_secret' in configuration):
 #     print("Both api_key and api_secret must be defined in "+flickr_api_filename)
 
@@ -43,54 +43,56 @@ checksum_pattern = "[0-9a-f]{32,40}"
 md5_machine_tag_prefix = "checksum:md5="
 sha1_machine_tag_prefix = "checksum:sha1="
 
+
 def md5sum(filename):
-    return checksum(filename,"md5")
+    return checksum(filename, "md5")
+
 
 def sha1sum(filename):
-    return checksum(filename,"sha1")
+    return checksum(filename, "sha1")
+
 
 def checksum(filename, type, blocksize=65536):
-  if type == "md5":
-    hash = hashlib.md5()
-  elif type == "sha1":
-    hash = hashlib.sha1()
-    
-  with open(filename, "rb") as f:
-    for block in iter(lambda: f.read(blocksize), b""):
-      hash.update(block)
-    result = hash.hexdigest()
-  
-  m = re.search('^('+checksum_pattern+')',result.strip())
-  if not m:
-    raise Exception("Output from "+type+"sum was unexpected: "+result)
-  return m.group(1)
+    if type == "md5":
+        hash = hashlib.md5()
+    elif type == "sha1":
+        hash = hashlib.sha1()
+
+    with open(filename, "rb") as f:
+        for block in iter(lambda: f.read(blocksize), b""):
+            hash.update(block)
+        result = hash.hexdigest()
+
+    m = re.search('^(' + checksum_pattern + ')', result.strip())
+    if not m:
+        raise Exception("Output from " + type + "sum was unexpected: " + result)
+    return m.group(1)
 
 
 def base58(n):
-    a='123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
-    bc=len(a)
-    enc=''
+    a = '123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
+    bc = len(a)
+    enc = ''
     while n >= bc:
-        div, mod = divmod(n,bc)
-        enc = a[mod]+enc
+        div, mod = divmod(n, bc)
+        enc = a[mod] + enc
         n = div
-    enc = a[n]+enc
+    enc = a[n] + enc
     return enc
 
+
 def short_url(photo_id):
-    encoded = base58(int(photo_id,10))
+    encoded = base58(int(photo_id, 10))
     return "http://flic.kr/p/%s" % (encoded,)
 
-def info_to_url(info_result,size=""):
+
+def info_to_url(info_result, size=""):
     a = info_result.getchildren()[0].attrib
-    if size in ( "", "-" ):
-        return 'http://farm%s.static.flickr.com/%s/%s_%s.jpg' %  (a['farm'], a['server'], a['id'], a['secret'])
-    elif size in ( "s", "t", "m", "b" ):
-        return 'http://farm%s.static.flickr.com/%s/%s_%s_%s.jpg' %  (a['farm'], a['server'], a['id'], a['secret'], size)
+    if size in ("", "-"):
+        return 'http://farm%s.static.flickr.com/%s/%s_%s.jpg' % (a['farm'], a['server'], a['id'], a['secret'])
+    elif size in ("s", "t", "m", "b"):
+        return 'http://farm%s.static.flickr.com/%s/%s_%s_%s.jpg' % (a['farm'], a['server'], a['id'], a['secret'], size)
     elif size == "o":
-        return 'http://farm%s.static.flickr.com/%s/%s_%s_o.%s' %  (a['farm'], a['server'], a['id'], a['originalsecret'], a['originalformat'])
+        return 'http://farm%s.static.flickr.com/%s/%s_%s_o.%s' % (a['farm'], a['server'], a['id'], a['originalsecret'], a['originalformat'])
     else:
-        raise Exception('Unknown size ('+size+')passed to info_to_url()')
-
-
-
+        raise Exception('Unknown size (' + size + ')passed to info_to_url()')
