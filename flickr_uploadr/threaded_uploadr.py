@@ -148,6 +148,7 @@ class Uploadr(threading.Thread):
         return d
 
     def callback(self, progress):
+        print('\rUploading: {:3}%'.format(progress))
         self.progress = self.out_dict.add_to_queue(upload_progress=progress)
 
     def update_db(self):
@@ -457,6 +458,7 @@ class Uploadr(threading.Thread):
                 album_title = os.path.basename(dirname)
 
             # Message in CLI to show which folder is being processed
+            print('')
             self.logger.info('Processing: {} ({} files)'.format(album_title, img_cnt))
             self.progress = self.out_dict.add_to_queue(total_images=img_cnt)
 
@@ -650,7 +652,6 @@ class Uploadr(threading.Thread):
             # Start the upload process
             if subdir != '':
                 main_dir = os.path.join(main_dir, subdir, '')
-                print(main_dir)
             self.logger.info('Start upload of main_dir = {}'.format(main_dir))
             self.progress = self.out_dict.add_to_queue(msg1='Start upload of main_dir =',
                                                        msg2=main_dir)
@@ -684,6 +685,7 @@ class Uploadr(threading.Thread):
                     photo_count = 0
                     for file in filtered_file_list:
                         photo_count += 1
+                        print('\tChecking file: {}'.format(file), end='\r')
                         # Set full path of image file
                         fname = os.path.join(dirname, file)
 
@@ -785,7 +787,7 @@ class Uploadr(threading.Thread):
                                                                        msg2='Breaking out file loop...')
                             break
                     # End of file loop
-                    # print('\n')
+
                     # Create album
                     if album_id is False:
                         self.progress = self.out_dict.add_to_queue(msg1='Creating new album')
@@ -822,7 +824,6 @@ class Uploadr(threading.Thread):
             self.logger.info('Finished processing all local folders')
             self.progress = self.out_dict.add_to_queue(msg1='Finished processing all local folders')
 
-            self.logger.info('Sorting albums')
             self.progress = self.out_dict.add_to_queue(msg2='Sorting albums')
             self.sort_albums()
 

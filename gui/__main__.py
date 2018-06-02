@@ -143,4 +143,9 @@ def update_monitor(thread_id):
     return progress
 
 
-eel.start('index.html', size=(600, 650), options={'chromeFlags': ["-incognito"]})
+def main():
+    eel.start('index.html', size=(600, 650), options={'chromeFlags': ["-incognito"]})
+
+
+if __name__ == "__main__":
+    main()
