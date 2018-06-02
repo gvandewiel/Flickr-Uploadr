@@ -2,7 +2,9 @@
 
 This module allows to activate multiple FlickrAPI instances to run concurrently
 """
-from gevent.queue import Queue
+#from gevent.queue import Queue
+from queue import Queue
+
 import flickrapi
 import exifread
 import logging
