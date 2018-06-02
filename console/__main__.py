@@ -89,7 +89,8 @@ def startThread(username='', method='', nargs=None):
 def stop_thread(thread_id):
     global exporting_threads
     print('\n\n' + c.FAIL + c.BOLD + '===== STOPPING THREAD WITH ID = {} ====='.format(thread_id) + c.ENDC)
-    exporting_threads[thread_id].progress['stop'] = True
+    if thread_id in exporting_threads:
+        exporting_threads[thread_id].progress['stop'] = True
 
 
 def get_user(username):

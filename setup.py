@@ -46,7 +46,7 @@ setup(name='FlickrUploadr',
       packages=find_packages(),
       entry_points={
         'console_scripts': [
-            'UploadrConsole = console.__main__:main',
+            'ConsoleUploadr = console.__main__:main',
           ],
         'gui_scripts': [
             'FlickrUploadr = gui.__main__:main',
