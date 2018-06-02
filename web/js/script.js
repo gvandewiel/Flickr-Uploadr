@@ -20,7 +20,7 @@ function js_pre(str) {
 
 eel.expose(poll)
 function poll(thread_id) {
-    poller = setInterval(get_poll, 2000, thread_id);
+    poller = setInterval(get_poll, 100, thread_id);
 };
 
 //#################################################################
@@ -67,7 +67,7 @@ function pop_list(data) {
   $('#username').append($('<option></option>').val('').html('- Please make a selection -'));
 	$.each(data, function(i,p) {
 		$('#username').append($('<option></option>').val(p).html(p));
-	});	
+	});
 }
 
 function get_user_config(username) {
