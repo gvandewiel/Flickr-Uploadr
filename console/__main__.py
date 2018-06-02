@@ -88,10 +88,11 @@ def startThread(username='', method='', nargs=None):
 
 def stop_thread(thread_id):
     global exporting_threads
-    print('\n\n' + c.FAIL + c.BOLD + '===== STOPPING THREAD WITH ID = {} ====='.format(thread_id) + c.ENDC)
     if thread_id in exporting_threads:
+        print('\n\n' + c.FAIL + c.BOLD + '===== STOPPING THREAD WITH ID = {} ====='.format(thread_id) + c.ENDC)
         exporting_threads[thread_id].progress['stop'] = True
-
+    else:
+        exit(0)
 
 def get_user(username):
     '''Retrieve list of configured users.
