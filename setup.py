@@ -44,6 +44,8 @@ setup(name='FlickrUploadr',
       long_description=get_contents('README.md'),
       author="Gijs van de Wiel",
       packages=find_packages(),
+      entry_points={
+        'console_scripts': ['FlickrUploadr = flickr_uploadr.threaded_uploadr:main'],
+      },
       install_requires=get_requirements('requirements.txt')
 )
-

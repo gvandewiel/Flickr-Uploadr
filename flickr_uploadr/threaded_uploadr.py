@@ -901,18 +901,12 @@ class Uploadr(threading.Thread):
         self.logger.info('Uploadr Thread died...')
 
 
-if __name__ == "__main__":
-    # Initiate Uploadr class
-    queue = Queue()
+def main():
+    print('\033[91m' + '\033[1m' + 'Uploader class is not callable from the command line.' + '\033[0m')
+    print('\033[93m' + 'For command line usage please install the console "plugin" and call:' + '\033[0m')
+    print('\tFlickrUploadr.console <rsync options>')
+    exit(0)
 
-    # Setup class
-    uploader = Uploadr(user='gvandewiel',
-                       queue=queue,
-                       method='update_remote',
-                       mkwargs={'main_dir': '/Users/gvandewiel/Pictures/Prive/',
-                                'public': False,
-                                'family': True,
-                                'friends': True,
-                                'update': False})
-    uploader.start()
-    uploader.join()
+
+if __name__ == "__main__":
+    main()

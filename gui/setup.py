@@ -45,8 +45,7 @@ setup(name='FlickrUploadr-GUI',
       author="Gijs van de Wiel",
       packages=find_packages(),
       entry_points={
-        'gui_scripts': ['FlickrUploader.GUI = gui.__main__:main'],
+        'gui_scripts': ['FlickrUploadr.GUI = gui.__main__:main'],
       },
       install_requires=get_requirements('requirements.txt')
 )
-
