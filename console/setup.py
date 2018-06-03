@@ -38,12 +38,15 @@ def get_absolute_path(*args):
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), *args)
 
 
-setup(name='FlickrUploadr',
-      version=get_version('flickr_uploadr', '__init__.py'),
-      description="Flickr Photo Uploader",
+setup(name='FlickrUploadr-Console',
+      version=get_version('__init__.py'),
+      description="Flickr Photo Uploader from console",
       long_description=get_contents('README.md'),
       author="Gijs van de Wiel",
       packages=find_packages(),
+      entry_points={
+        'console_scripts': ['FlickrUploadr.console = console.__main__:main'],
+      },
       install_requires=get_requirements('requirements.txt')
 )
 

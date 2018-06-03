@@ -1,0 +1,2 @@
+FlickrUploadr >= 2.0.1
+flickrapi >= 2.3.1

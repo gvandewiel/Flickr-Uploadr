@@ -40,10 +40,17 @@ def get_absolute_path(*args):
 
 setup(name='FlickrUploadr',
       version=get_version('flickr_uploadr', '__init__.py'),
-      description="Flickr Photo Uploader",
+      description="Flickr Photo Uploader from console",
       long_description=get_contents('README.md'),
       author="Gijs van de Wiel",
       packages=find_packages(),
+      entry_points={
+        'console_scripts': ['FlickrUploadr = console.__main__:main'],
+        'gui_scripts': ['FlickrUploader.GUI = gui.__main__:main[GUI]'],
+        },
+      extras_require={
+          'GUI': ['Eel >= 0.9.7', 'gevent >= 1.2.2']
+      },
       install_requires=get_requirements('requirements.txt')
 )
 
