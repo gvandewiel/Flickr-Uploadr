@@ -5,7 +5,6 @@ import re
 
 # De-facto standard solution for Python packaging.
 from setuptools import find_packages, setup
-from multiprocessing import Process
 
 
 def get_contents(*args):
@@ -38,46 +37,26 @@ def get_absolute_path(*args):
     """Transform relative pathnames into absolute pathnames."""
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), *args)
 
-if __name__ == '__main__':
-    setups = [
-            {'name':'FlickrUploadr',
-             'version':get_version('flickr_uploadr', '__init__.py'),
-             'description':"Flickr Photo Uploader",
-             'long_description':get_contents('README.md'),
-             'author':"Gijs van de Wiel",
-             'packages':find_packages(),
-             'entry_points':{
-                 'console_scripts': ['FlickrUploadr = flickr_uploadr.threaded_uploadr:main'],
-             },
-             'install_requires':get_requirements('requirements.txt')
-            },
-            {'name':'FlickrUploadr-Console',
-             'version':get_version('console','__init__.py'),
-             'description':"Flickr Photo Uploader from console",
-             'long_description':get_contents('gui','README.md'),
-             'author':"Gijs van de Wiel",
-             'packages':find_packages(where='console'),
-             'entry_points':{
-                 'console_scripts': ['FlickrUploadr.console = console.__main__:main'],
-             },
-             'install_requires':get_requirements('console','requirements.txt')
-            },
-            {'name':'FlickrUploadr-GUI',
-             'version':get_version('gui','__init__.py'),
-             'description':"Flickr Photo Uploader with Eel-based GUI",
-             'long_description':get_contents('gui','README.md'),
-             'author':"Gijs van de Wiel",
-             'packages':find_packages(where='gui'),
-             'entry_points':{
-                 'gui_scripts': ['FlickrUploadr.GUI = gui,.__main__:main'],
-             },
-             'install_requires':get_requirements('gui','requirements.txt')
-            }]
-            
-    for s in setups:
-        name = s['name']
-        print("Building '{}'.".format(name))
-        p = Process(target=setup, kwargs=s)
-        p.start()
-        p.join()
-        print("Building of '{}' done.\n".format(name))
+setup(name='FlickrUploadr',
+      version=get_version('flickr_uploadr', '__init__.py'),
+      description="Flickr Photo Uploader",
+      long_description=get_contents('README.md'),
+      author="Gijs van de Wiel",
+      packages=find_packages(),
+      entry_points={
+        'console_scripts': ['FlickrUploadr = flickr_uploadr.threaded_uploadr:main',
+                            'FlickrUploadr.console = console.__main__:main'],
+        'gui_scripts': ['FlickrUploadr.GUI = gui.__main__:main[GUI]'],
+      },
+      install_requires=get_requirements('requirements.txt'),
+      extras_require={'GUI':  ["Eel >= 0.9.7"]},
+)
+
+print('''
+NOTE:
+The FlickrUploadr.GUI requires Eel (and gevent, part of Eel dpependecies).
+The should be installed manually by the user to prevent critical failure during installation of the FlickrUploadr. This can be done by running:
+\t\tpip install Eel >= 0.9.7
+On Synology systems this is not available.
+
+''')
