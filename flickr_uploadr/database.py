@@ -15,14 +15,7 @@ class FlickrDatabase():
 
         # Setup logging
         self.logger = logging.getLogger('Flickr2SQLite')
-        self.logger.setLevel(logging.INFO)
-
-        # add a rotating handler
-        # if not os.path.exists('logs'):
-        #         os.makedirs('logs')
-        # log_name = '{}_{}.log'.format(user, 'database')
-        # handler = logging.FileHandler(os.path.join('logs',log_name))
-        # self.logger.addHandler(handler)
+        # self.logger.setLevel(logging.INFO)
 
         # Retrieve overall output dictionary
         self.out_dict = out_dict
