@@ -36,19 +36,7 @@ class Uploadr(threading.Thread):
 
         # Setup logging
         self.logger = logging.getLogger('FlickrUploader')
-        self.logger.setLevel(logging.INFO)
-
-        # add a rotating handler
-        # if not os.path.exists('logs'):
-        #     os.makedirs('logs')
-        # log_name = '{}_{}.log'.format(user, method)
-        # handler = logging.FileHandler(os.path.join('logs',log_name))
-        # self.logger.addHandler(handler)
-
-        # Green Bold  = \033[1m\033[92m
-        # Red bold    = \033[91m\033[1m
-        # Yellow bold = \033[93m\033[1m
-        # Normal      = \033[0m
+        # self.logger.setLevel(logging.INFO)
 
         # Set some instance variables
         self.user = user
