@@ -30,8 +30,8 @@ exporting_threads = {}
 thread_id = 0
 
 # Reduce amount of output
-# logging.getLogger('werkzeug').setLevel(logging.ERROR)
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig()
+logging.getLogger().setLevel(logging.ERROR)
 
 for key in logging.Logger.manager.loggerDict.keys():
     logging.getLogger(key).setLevel(logging.ERROR)
