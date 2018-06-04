@@ -350,7 +350,8 @@ class FlickrDatabase():
             for photo in photo_elements:
                 photo_count += 1
                 self.progress = self.out_dict.add_to_queue(actual_image=photo_count)
-                self.logger.debug('Updating album photos {} of {}'.format(photo_count, total_set_photos))
+                # self.logger.debug('Updating album photos {} of {}'.format(photo_count, total_set_photos))
+                print('\tUpdating album photos {} of {}'.format(photo_count, total_set_photos), end='\r')
 
                 """Add photo to the correct album table.
                 The function takes the entire photo object as input, al the
