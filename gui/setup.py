@@ -37,26 +37,15 @@ def get_absolute_path(*args):
     """Transform relative pathnames into absolute pathnames."""
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), *args)
 
-setup(name='FlickrUploadr',
-      version=get_version('flickr_uploadr', '__init__.py'),
-      description="Flickr Photo Uploader",
+
+setup(name='FlickrUploadr-GUI',
+      version=get_version('__init__.py'),
+      description="FlickrUploader Eel GUI",
       long_description=get_contents('README.md'),
       author="Gijs van de Wiel",
       packages=find_packages(),
       entry_points={
-        'console_scripts': ['FlickrUploadr = flickr_uploadr.threaded_uploadr:main',
-                            'FlickrUploadr.console = console.__main__:main'],
-        'gui_scripts': ['FlickrUploadr.GUI = gui.__main__:main[GUI]'],
+        'gui_scripts': ['FlickrUploadr.GUI = gui.__main__:main'],
       },
-      install_requires=get_requirements('requirements.txt'),
-      extras_require={'GUI':  ["Eel >= 0.9.7"]},
+      install_requires=get_requirements('requirements.txt')
 )
-
-print('''
-NOTE:
-The FlickrUploadr.GUI requires Eel (and gevent, part of Eel dpependecies).
-The should be installed manually by the user to prevent critical failure during installation of the FlickrUploadr. This can be done by running:
-\t\tpip install Eel >= 0.9.7
-On Synology systems this is not available.
-
-''')

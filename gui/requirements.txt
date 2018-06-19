@@ -1,0 +1,3 @@
+FlickrUploadr>=2.0.1
+Eel >= 0.9.7
+gevent >= 1.2.2
