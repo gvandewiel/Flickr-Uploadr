@@ -37,20 +37,17 @@ def get_absolute_path(*args):
     """Transform relative pathnames into absolute pathnames."""
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), *args)
 
-setup(name='FlickrUploadr',
-      version=get_version('flickr_uploadr', '__init__.py'),
+setup(name='flickruploadr',
+      version=get_version('flickruploadr', '__init__.py'),
       description="Flickr Photo Uploader",
       long_description=get_contents('README.md'),
       author="Gijs van de Wiel",
       packages=find_packages(),
-      entry_points={
-        'console_scripts': ['FlickrUploadr = flickr_uploadr.threaded_uploadr:main',
-                            'FlickrUploadr.console = console.__main__:main'],
-        'gui_scripts': ['FlickrUploadr.GUI = gui.__main__:main[GUI]'],
-      },
       install_requires=get_requirements('requirements.txt'),
-      extras_require={'GUI':  ["Eel >= 0.9.7"]},
-)
+      entry_points={
+          'console_scripts': ['flickruploadr = flickruploadr.__main__:main'],
+      }
+      )
 
 print('''
 NOTE:
@@ -60,3 +57,4 @@ The should be installed manually by the user to prevent critical failure during 
 On Synology systems this is not available.
 
 ''')
+
