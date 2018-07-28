@@ -64,15 +64,15 @@ class FlickrDatabase():
         self.progress = self.out_dict.add_to_queue(msg2='Setup albums table')
         self.__setup_albums_table__()
 
-        # Update photos table
-        self.logger.info('Listing all Flickr photos')
-        self.progress = self.out_dict.add_to_queue(msg2='Listing all Flickr photos')
-        self.list_photos()
-
         # Update albums table and create all separate album tables
         self.logger.info('Listing all Flickr sets')
         self.progress = self.out_dict.add_to_queue(msg2='Listing all Flickr sets')
         self.list_albums(update=True)
+
+        # Update photos table
+        self.logger.info('Listing all Flickr photos')
+        self.progress = self.out_dict.add_to_queue(msg2='Listing all Flickr photos')
+        self.list_photos()
 
         # Tell the gui that the rebuild has finished
         self.logger.info('Finished updating database')
