@@ -3,7 +3,7 @@ import logging
 import os
 import configparser
 import signal
-from FlickrUploadr import Uploadr
+from flickruploadr import Uploadr
 
 class c:
     HEADER = '\033[95m'
