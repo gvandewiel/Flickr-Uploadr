@@ -1,6 +1,6 @@
 from __future__ import print_function
 # Semi-standard module versioning.
-__version__ = '2.0.1'
+__version__ = '2.0.2'
 
 """Threaded uploader modulue.
 
