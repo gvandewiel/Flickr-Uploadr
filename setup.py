@@ -6,7 +6,6 @@ import re
 # De-facto standard solution for Python packaging.
 from setuptools import find_packages, setup
 
-
 def get_contents(*args):
     """Get the contents of a file relative to the source distribution directory."""
     with codecs.open(get_absolute_path(*args), 'r', 'UTF-8') as handle:
@@ -33,6 +32,15 @@ def get_requirements(*args):
     return sorted(requirements)
 
 
+def get_data_files(*args):
+    """Retrieve data_files for gui"""
+    _ret = list()
+    for path, subdirs, files in os.walk(get_absolute_path(*args)):
+        for name in files:
+            _ret.append(os.path.join(path, name))
+    return _ret
+
+
 def get_absolute_path(*args):
     """Transform relative pathnames into absolute pathnames."""
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), *args)
@@ -43,12 +51,13 @@ setup(name='flickruploadr',
       long_description=get_contents('README.md'),
       author="Gijs van de Wiel",
       packages=find_packages(),
+      include_package_data=True,
+      setup_requires=[ "setuptools_git >= 0.3", ],
       install_requires=get_requirements('requirements.txt'),
       entry_points={
           'console_scripts': ['flickruploadr = flickruploadr.__main__:main'],
       }
       )
-
 print('''
 NOTE:
 The FlickrUploadr.GUI requires Eel (and gevent, part of Eel dpependecies).
@@ -57,4 +66,3 @@ The should be installed manually by the user to prevent critical failure during 
 On Synology systems this is not available.
 
 ''')
-

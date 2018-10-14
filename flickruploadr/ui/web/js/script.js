@@ -20,7 +20,7 @@ function js_pre(str) {
 
 eel.expose(poll)
 function poll(thread_id) {
-    poller = setInterval(get_poll, 100, thread_id);
+    poller = setInterval(get_poll, 50, thread_id);
 };
 
 //#################################################################

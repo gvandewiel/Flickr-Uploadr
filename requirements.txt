@@ -1,3 +1,2 @@
 flickrapi >= 2.3.1
-greenlet == 0.4.13
-ExifRead == 2.1.2    
+ExifRead == 2.1.2

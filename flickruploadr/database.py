@@ -312,6 +312,8 @@ class FlickrDatabase():
             self.logger.info('Updating photos in album "{}"'.format(album_title))
             self.progress = self.out_dict.add_to_queue(msg2='Updating photos in album "{}"'.format(album_title))
             update = self.write_photos_to_album(album_id=album_id)
+            self.progress = self.out_dict.clear()
+
 
     def write_photos_to_album(self, album_id, per_page=500):
         # Create table for album in the database

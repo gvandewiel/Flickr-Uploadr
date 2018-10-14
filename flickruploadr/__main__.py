@@ -1,8 +1,5 @@
 from __future__ import print_function
 from optparse import OptionParser
-from .ui.console import main as console
-from .ui.gui import main as gui
-
 
 def main(args=None):
     """The main routine."""
@@ -18,8 +15,10 @@ def main(args=None):
     (options, args) = parser.parse_args()
 
     if options.console:
+        from .ui.console import main as console
         console()
     elif options.gui:
+        from .ui.gui import main as gui
         gui()
     elif options.console and options.gui:
         print("FlickrUploadr can't run in console and GUI simultaneously")

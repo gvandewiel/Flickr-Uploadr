@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Semi-standard module versioning.
 __version__ = '2.0.1'
 
@@ -19,7 +20,6 @@ from .database import FlickrDatabase
 from . import common
 import threading
 import configparser
-
 
 class Uploadr(threading.Thread):
     """Threaded uploader."""
@@ -890,18 +890,3 @@ class Uploadr(threading.Thread):
         self.progress = self.out_dict.add_to_queue(msg1='Uploadr Thread died...')
         self.progress = self.out_dict.add_to_queue(exitFlag=True)
         self.logger.info('Uploadr Thread died...')
-
-
-'''
-def main():
-    print('\033[91m' + '\033[1m' + 'Uploader class is not callable from the command line.' + '\033[0m')
-    print('\033[93m' + 'For command line usage please install the console "plugin" and call:' + '\033[0m')
-    print('\tFlickrUploadr -c')
-    print('\033[93m' + 'For a GUI  insatll gui "plugin" and call:' + '\033[0m')
-    print('\tFlickrUploadr -g')
-    exit(0)
-
-
-if __name__ == "__main__":
-    main()
-'''

@@ -227,12 +227,12 @@ def main():
 
     # Update database
     print(c.HEADER + c.BOLD + '==== OPTIONS ====' + c.ENDC)
-    data['update'] = get_bool(c.GREEN + 'Update database before upload?' + c.ENDC + ' (true / false *)', default=False)
+    data['update'] = get_bool(c.GREEN + 'Update database before upload?' + c.ENDC + ' (y / n *) ', default=False)
 
     # Privacy selection
-    data['public'] = get_bool(c.GREEN + 'Uploaded photos are public?' + c.ENDC + ' (true * / false)')
-    data['friends'] = get_bool(c.GREEN + 'Uploaded photos are visible for friends?' + c.ENDC + ' (true * / false)')
-    data['family'] = get_bool(c.GREEN + 'Uploaded photos are visible for family?' + c.ENDC + ' (true * / false)')
+    data['public'] = get_bool(c.GREEN + 'Uploaded photos are public?' + c.ENDC + ' (y * / n) ')
+    data['friends'] = get_bool(c.GREEN + 'Uploaded photos are visible for friends?' + c.ENDC + ' (y * / n) ')
+    data['family'] = get_bool(c.GREEN + 'Uploaded photos are visible for family?' + c.ENDC + ' (y * / n) ')
     print('')
 
     print(c.HEADER + c.BOLD + '==== START UPLOADR ====' + c.ENDC)

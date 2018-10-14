@@ -1,8 +1,8 @@
 from __future__ import print_function
-import eel
 import logging
 import os
 import configparser
+import eel
 from flickruploadr import Uploadr
 
 class LogHandler(logging.Handler):
@@ -143,7 +143,7 @@ def main():
 
     import pkg_resources
 
-    web_path = os.path.join(pkg_resources.resource_filename('flickr_uploadr', 'ui'), 'web')
+    web_path = os.path.join(pkg_resources.resource_filename('flickruploadr', 'ui'), 'web')
     print(web_path)
     eel.init(web_path)
     eel.start('index.html', size=(600, 650), options={'chromeFlags': ["-incognito"]})
