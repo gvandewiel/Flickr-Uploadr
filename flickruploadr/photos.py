@@ -1,4 +1,4 @@
-class Photos(flickr):
+class Photos():
     def __init__(self, obj):
         self.flickrcore = obj
         
@@ -12,17 +12,20 @@ class Photos(flickr):
         return photo_id, photo
 
     def find_local_photo(self, md5):
+        """OUTPUT FROM SQLite query
+
+        0 = id
+        1 = title
+        2 = md5
+        3 = sha1
+        4 = public
+        5 = friend
+        6 = family
+        7 = date_taken
+        """
         query = "SELECT * FROM photos WHERE md5='{}'".format(md5)
         result = self.db.sql(query).fetchone()
-        '''OUTPUT FROM SQLite query:
-               0 = id
-               1 = title
-               2 = md5
-               3 = sha1
-               4 = public
-               5 = friend
-               6 = family
-               7 = date_taken'''
+
         if result is None:
             return False, False
         else:
@@ -57,7 +60,7 @@ class Photos(flickr):
                 # Mark all photos for removal except first one
                 for i, elem in enumerate(photo_elements[1:]):
                     self.logger.debug('Marking photo with id "{}" for removal'.format(photo_elements[0].attrib['id']))
-                    self.progress = self.out_dict.add_to_queue(msg2='Marking photo with id "{}" for removal'.format(photo_elements[0].attrib['id']))
+                    self.progress = self.out_dict(msg2='Marking photo with id "{}" for removal'.format(photo_elements[0].attrib['id']))
 
                     self.flickr.photos.addTags(photo_id=photo_elements[0].attrib['id'],
                                                tags='ToDelete')

@@ -43,7 +43,7 @@ class OutDict():
         if queue is not None:
             self.queue.put(self.out_dict)
 
-    def add_to_queue(self, **kwargs):
+    def __call__(self, **kwargs):
         """Add **kwargs to dictionary
 
         If **kwars does not exist it is created.
