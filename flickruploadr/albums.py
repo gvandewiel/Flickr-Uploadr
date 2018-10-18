@@ -1,6 +1,9 @@
 class Albums():
-    def __init__(flickr):
-        self.flickr = flickr
+    def __init__(self, obj):
+        self.flickrcore = obj
+        
+    def __getattr__(self, attr):
+        return getattr(self.flickrcore, attr)
         
     def find_album(self, album_title):
         # Search for album_title in local database

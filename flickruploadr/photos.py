@@ -1,6 +1,9 @@
 class Photos(flickr):
-    def __init__(self, flickr):
-        self.flickr = flickr
+    def __init__(self, obj):
+        self.flickrcore = obj
+        
+    def __getattr__(self, attr):
+        return getattr(self.flickrcore, attr)
         
     def find_photo(self, md5):
         photo_id, photo = self.find_local_photo(md5)
