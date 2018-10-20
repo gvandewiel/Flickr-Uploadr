@@ -1,10 +1,15 @@
+from . import common
+
 class Albums():
     def __init__(self, obj):
         self.flickrcore = obj
-        
+        self.logger = common.create_logger('FlickrAlbums')
+        self.logger.info('Starting FlickrAlbums')
+        self.progress(msg1='Starting FlickrAlbums')
+
     def __getattr__(self, attr):
         return getattr(self.flickrcore, attr)
-        
+
     def find_album(self, album_title):
         # Search for album_title in local database
         album_id = self.find_local_album(album_title)
@@ -14,7 +19,7 @@ class Albums():
             album_id = self.find_flickr_album(album_title)
             if album_id is False:
                 self.logger.info('Album "{}" not found in updated database'.format(album_title))
-                self.progress = self.out_dict(msg1='Album not found in updated database')
+                self.progress(msg1='Album not found in updated database')
         return album_id
 
     def find_local_album(self, album_title):
@@ -29,11 +34,11 @@ class Albums():
     def find_flickr_album(self, album_title):
         if self.album_up2date is False:
             self.logger.info('Updating album database')
-            self.progress = self.out_dict(msg1='Updating album database')
+            self.progress(msg1='Updating album database')
             self.db.list_albums(update=False, verbose=False)
             self.album_up2date = True
         return self.find_local_album(album_title)
-        
+
     def sort_album_photos(self, album_id):
         sorted_photos = list()
         id_list = self.db.retrieve_album_photos().fetchall()
@@ -46,7 +51,7 @@ class Albums():
 
         return sorted_photos
 
-    def sort_albums(self, sort_photos=False, per_page=500):
+    def sort(self, sort_photos=False, per_page=500):
         albums = dict()
         sorted_id = list()
 
@@ -59,13 +64,13 @@ class Albums():
 
         # Retrieve total sets
         total_albums = int(total_albums.getchildren()[0].attrib['total'])
-        self.progress = self.out_dict(total_albums=total_albums)
+        self.progress(total_albums=total_albums)
 
         # number of processed sets
         set_cnt = 0
-        self.progress = self.out_dict(actual_albums=set_cnt)
+        self.progress(actual_albums=set_cnt)
 
-        self.progress = self.out_dict(msg1='Sorting {} albums'.format(total_albums))
+        self.progress(msg1='Sorting {} albums'.format(total_albums))
         self.logger.debug('Sorting {} albums'.format(total_albums))
 
         # Loop over all albums and retrieve ID, title and the number of photo's and video's
@@ -82,7 +87,7 @@ class Albums():
             # Loop over sets from Flickr query
             for set in set_elements:
                 set_cnt += 1
-                self.progress = self.out_dict(album_title=set.getchildren()[0].text, actual_albums=set_cnt)
+                self.progress(album_title=set.getchildren()[0].text, actual_albums=set_cnt)
                 self.logger.debug('{} - Setname {}'.format(set_cnt, set.getchildren()[0].text))
                 albums[set.getchildren()[0].text] = set.attrib['id']
 
@@ -90,7 +95,7 @@ class Albums():
             set_page += 1
 
         self.logger.info('Sorting albums')
-        self.progress = self.out_dict(msg1='Sorting albums')
+        self.progress(msg1='Sorting albums')
 
         for key in sorted(albums, reverse=True):
             # print("{}:{}".format(key, albums[key]))
@@ -99,7 +104,7 @@ class Albums():
             # Sort album photos
             if sort_photos is True:
                 self.logger.info('Reorder album photos for "{}"'.format(key))
-                self.progress = self.out_dict(msg2='Reorder album photos for "{}"'.format(key))
+                self.progress(msg2='Reorder album photos for "{}"'.format(key))
                 self.sort_album_photos(albums[key])
 
         sorted_ids = ','.join([str(x) for x in sorted_id])
@@ -107,10 +112,10 @@ class Albums():
         self.logger.info('Reorder albums')
         self.flickr.photosets.orderSets(photoset_ids=sorted_ids)
         self.logger.debug('Finished reording photos')
-        
-    def create_album(self, album_title, photo_dict):
+
+    def create(self, album_title, photo_dict):
         self.logger.info('Creating album "{}"'.format(album_title))
-        self.progress = self.out_dict(msg1='Creating new album')
+        self.progress(msg1='Creating new album')
 
         self.logger.debug('Finding primary photo')
         self.logger.debug(photo_dict)
@@ -127,13 +132,13 @@ class Albums():
         album_id = album_id.getchildren()[0].attrib['id']
 
         self.logger.debug('Creating database table "{}"'.format(album_id))
-        self.progress = self.out_dict(msg2='Creating database table "{}"'.format(album_id))
+        self.progress(msg2='Creating database table "{}"'.format(album_id))
         self.db.create_album_table(album_id)
         return album_id
 
-    def update_album(self, album_id, album_title, photo_dict):
+    def update(self, album_id, album_title, photo_dict):
         self.logger.info('Updating album "{}" ({}) with {} items.'.format(album_title, album_id, len(photo_dict)))
-        self.progress = self.out_dict(msg1='Updating album "{}" ({})'.format(album_title, album_id),
+        self.progress(msg1='Updating album "{}" ({})'.format(album_title, album_id),
                                       msg2='with {} items'.format(len(photo_dict)))
 
         self.logger.debug('Loop over photos; add to db')
@@ -141,7 +146,7 @@ class Albums():
             self.db.write_flickr_photo(dict_photo=photo, table=album_id)
 
         self.logger.info('Add photos to album at Flickr')
-        self.progress = self.out_dict(msg2='Add photos to album at Flickr')
+        self.progress(msg2='Add photos to album at Flickr')
 
         query = "SELECT id FROM '{}' ORDER BY date_taken ASC".format(album_id)
         rsp = self.db.sql(query)

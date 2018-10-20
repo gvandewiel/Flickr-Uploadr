@@ -23,8 +23,8 @@ class OutDict():
 
         self.queue = queue
 
-        self.out_dict = {}
-        self.out_dict = {'album': '',
+        self.dict = {}
+        self.dict = {'album': '',
                          'album_id': '',
                          'filename': '',
                          'actual_image': 0,
@@ -41,7 +41,7 @@ class OutDict():
                          }
 
         if queue is not None:
-            self.queue.put(self.out_dict)
+            self.queue.put(self.dict)
 
     def __call__(self, **kwargs):
         """Add **kwargs to dictionary
@@ -51,28 +51,28 @@ class OutDict():
             **kwargs: key:value pair
         """
         for key, value in kwargs.items():
-            self.out_dict[key] = value
+            self.dict[key] = value
 
         if self.queue is None:
             # print('out_dict={}'.format(self.out_dict))
             pass
         else:
-            self.queue.put(self.out_dict)
+            self.queue.put(self.dict)
 
-        if self.out_dict['msg1'] == '':
-            self.out_dict['msg1'] = '-'
+        if self.dict['msg1'] == '':
+            self.dict['msg1'] = '-'
 
-        if self.out_dict['msg2'] == '':
-            self.out_dict['msg2'] = '-'
+        if self.dict['msg2'] == '':
+            self.dict['msg2'] = '-'
 
-        if 'exitFlag' not in self.out_dict:
-            self.out_dict['exitFlag'] = False
+        if 'exitFlag' not in self.dict:
+            self.dict['exitFlag'] = False
 
-        return self.out_dict
+        return self
 
     def clear(self):
         """Clear output dictionary."""
-        self.out_dict = {'album': '',
+        self.dict = {'album': '',
                          'album_id': '',
                          'filename': '',
                          'actual_image': 0,
@@ -87,4 +87,4 @@ class OutDict():
                          'stop': False,
                          'exitFlag': False
                          }
-        return self.out_dict
+        return self

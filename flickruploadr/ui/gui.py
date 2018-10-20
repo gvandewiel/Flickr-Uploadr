@@ -3,7 +3,7 @@ import logging
 import os
 import configparser
 import eel
-from flickruploadr import Uploadr
+from flickruploadr.core import FlickrCore
 
 class LogHandler(logging.Handler):
     def emit(self, record):
@@ -46,9 +46,10 @@ def startThread(username='', method='', nargs=None):
     # Set arguments for target function as keyword paramters
     if username != '' and method != '' and nargs is not None:
         thread_id += 1
-        exporting_threads[thread_id] = Uploadr(user=username,
-                                               method=method,
-                                               mkwargs=nargs)
+        exporting_threads[thread_id] = FlickrCore(user=username,
+                                                  method=method,
+                                                  dry_run=True,
+                                                  mkwargs=nargs)
         # Set thread as non-deamon to prevent the usage of join
         # Furhtermore it allows to see the progress while stopping a thread
         exporting_threads[thread_id].setDaemon(False)
@@ -100,7 +101,7 @@ def dirlist(main_dir):
 @eel.expose
 def update_monitor(thread_id):
     global exporting_threads
-    progress = exporting_threads[thread_id].progress
+    progress = exporting_threads[thread_id].progress.dict
     try:
         progress['pb_albums'] = int((progress['actual_album'] / progress['total_albums']) * 100)
     except:

@@ -1,17 +1,22 @@
+from . import common
+
 class Photos():
     def __init__(self, obj):
         self.flickrcore = obj
-        
+        self.logger = common.create_logger('FlickrPhotos')
+        self.logger.info('Starting FlickrPhotos')
+        self.progress(msg1='Starting FlickrPhotos')
+
     def __getattr__(self, attr):
         return getattr(self.flickrcore, attr)
-        
-    def find_photo(self, md5):
-        photo_id, photo = self.find_local_photo(md5)
+
+    def find(self, md5):
+        photo_id, photo = self.find_local(md5)
         if photo_id is False:
-            photo_id, photo = self.find_flickr_photo(md5)
+            photo_id, photo = self.find_flickr(md5)
         return photo_id, photo
 
-    def find_local_photo(self, md5):
+    def find_local(self, md5):
         """OUTPUT FROM SQLite query
 
         0 = id
@@ -40,7 +45,7 @@ class Photos():
             data_dict['date_taken'] = result[7]
             return result[0], data_dict
 
-    def find_flickr_photo(self, md5, write_to_db=True):
+    def find_flickr(self, md5, write_to_db=True):
         # Check flickr database
         if common.MD5_MACHINE_TAG_PREFIX not in md5:
             md5 = common.MD5_MACHINE_TAG_PREFIX + md5
@@ -60,7 +65,7 @@ class Photos():
                 # Mark all photos for removal except first one
                 for i, elem in enumerate(photo_elements[1:]):
                     self.logger.debug('Marking photo with id "{}" for removal'.format(photo_elements[0].attrib['id']))
-                    self.progress = self.out_dict(msg2='Marking photo with id "{}" for removal'.format(photo_elements[0].attrib['id']))
+                    self.progress(msg2='Marking photo with id "{}" for removal'.format(photo_elements[0].attrib['id']))
 
                     self.flickr.photos.addTags(photo_id=photo_elements[0].attrib['id'],
                                                tags='ToDelete')
@@ -69,8 +74,8 @@ class Photos():
             if write_to_db:
                 self.db.write_flickr_photo(obj_photo=photo_elements[0], table='photos')
             return photo_elements[0].attrib['id'], photo_elements[0]
-            
-    def photo_to_dict(self, photo):
+
+    def to_dict(self, photo):
         data_dict = dict()
         machine_tags = photo.attrib['machine_tags'].split(' ')
 
@@ -84,7 +89,7 @@ class Photos():
         data_dict['date_taken'] = common.flickr_date_taken(photo)
         return data_dict
 
-    def add_to_album(self, data_dict, photo_dict):
+    def to_album(self, data_dict, photo_dict):
         """Dictionary of photo data.
 
         data_dict should contain the following key:value pairs:

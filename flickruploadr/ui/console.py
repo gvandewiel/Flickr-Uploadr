@@ -3,7 +3,7 @@ import logging
 import os
 import configparser
 import signal
-from flickruploadr import Uploadr
+from flickruploadr.core import FlickrCore
 
 class c:
     HEADER = '\033[95m'
@@ -52,9 +52,10 @@ def startThread(username='', method='', nargs=None):
     # Set arguments for target function as keyword paramters
     if username != '' and method != '' and nargs is not None:
         thread_id += 1
-        exporting_threads[thread_id] = Uploadr(user=username,
-                                               method=method,
-                                               mkwargs=nargs)
+        exporting_threads[thread_id] = FlickrCore(user=username,
+                                                  method=method,
+                                                  dry_run=True,
+                                                  mkwargs=nargs)
         # Set thread as non-deamon to prevent the usage of join
         # Furhtermore it allows to see the progress while stopping a thread
         exporting_threads[thread_id].setDaemon(False)
@@ -142,6 +143,7 @@ def main():
     thread_id = 0
 
     # Reduce amount of output
+    '''
     logging.basicConfig()
     logging.getLogger().setLevel(logging.ERROR)
 
@@ -153,7 +155,7 @@ def main():
 
     Flickr2SQLiteLogger = logging.getLogger('Flickr2SQLite')
     Flickr2SQLiteLogger.setLevel(logging.DEBUG)
-
+    '''
     data = dict()
 
     users = get_user(username='')
