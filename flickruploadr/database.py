@@ -192,18 +192,18 @@ class FlickrDatabase():
                     self.logger.info("Removing old MD5 tag (" + m_md5 + ")")
                     self.flickr.photos.removeTag(tag_id=m_md5)
 
-                    self.logger.info("Setting MD5 tag = " + real_md5sum)
-                    self.flickr.photos.addTags(photo_id=photo_id,
-                                               tags=common.MD5_MACHINE_TAG_PREFIX + real_md5sum)
-
                 if re.search('^' + common.SHA1_MACHINE_TAG_PREFIX, t.attrib['raw']):
                     m_sha1 = t.attrib['id']
                     self.logger.info("Removing old SHA1 tag (" + m_sha1 + ")")
                     self.flickr.photos.removeTag(tag_id=m_sha1)
 
-                    self.logger.info("Setting SHA1 tag = " + real_sha1sum)
-                    self.flickr.photos.addTags(photo_id=photo_id,
-                                               tags=common.SHA1_MACHINE_TAG_PREFIX + real_sha1sum)
+            self.logger.info("Setting MD5 tag = " + real_md5sum)
+            self.flickr.photos.addTags(photo_id=photo_id,
+                                       tags=common.MD5_MACHINE_TAG_PREFIX + real_md5sum)
+
+            self.logger.info("Setting SHA1 tag = " + real_sha1sum)
+            self.flickr.photos.addTags(photo_id=photo_id,
+                                       tags=common.SHA1_MACHINE_TAG_PREFIX + real_sha1sum)
 
             # Remove temporary file
             self.logger.info("Removing temporary file.")

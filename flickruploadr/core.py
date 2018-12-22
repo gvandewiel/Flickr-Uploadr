@@ -107,28 +107,15 @@ class FlickrCore(threading.Thread):
         return logger, progress
 
     def set_log_level(self, *args):
-        if len(args) == 0:
-            logging.getLogger('FlickrCore').setLevel(logging.WARNING)
-            logging.getLogger('FlickrDB').setLevel(logging.WARNING)
-            logging.getLogger('FlickrPhotos').setLevel(logging.WARNING)
-            logging.getLogger('FlickrAlbums').setLevel(logging.WARNING)
-            logging.getLogger('FlickrParser').setLevel(logging.WARNING)
-            logging.getLogger('FlickrUploader').setLevel(logging.WARNING)
-        else:
-            if args[0] == 'INFO':
-                logging.getLogger('FlickrCore').setLevel(logging.INFO)
-                logging.getLogger('FlickrDB').setLevel(logging.INFO)
-                logging.getLogger('FlickrPhotos').setLevel(logging.INFO)
-                logging.getLogger('FlickrAlbums').setLevel(logging.INFO)
-                logging.getLogger('FlickrParser').setLevel(logging.INFO)
-                logging.getLogger('FlickrUploader').setLevel(logging.INFO)
-            if args[0] == 'DEBUG':
-                logging.getLogger('FlickrCore').setLevel(logging.DEBUG)
-                logging.getLogger('FlickrDB').setLevel(logging.DEBUG)
-                logging.getLogger('FlickrPhotos').setLevel(logging.DEBUG)
-                logging.getLogger('FlickrAlbums').setLevel(logging.DEBUG)
-                logging.getLogger('FlickrParser').setLevel(logging.DEBUG)
-                logging.getLogger('FlickrUploader').setLevel(logging.DEBUG)
+        for key in logging.Logger.manager.loggerDict.keys():
+            if 'Flickr' in key:
+                if len(args) == 0:
+                    logging.getLogger(key).setLevel(logging.WARNING)
+                else:
+                    if args[0] == 'INFO':
+                        logging.getLogger(key).setLevel(logging.INFO)
+                    if args[0] == 'DEBUG':
+                        logging.getLogger(key).setLevel(logging.DEBUG)
 
     def __read_config__(self, user):
         # Retrieve configuration

@@ -137,16 +137,17 @@ class Albums():
         return album_id
 
     def update(self, album_id, album_title, photo_dict):
-        self.logger.info('Updating album "{}" ({}) with {} items.'.format(album_title, album_id, len(photo_dict)))
-        self.progress(msg1='Updating album "{}" ({})'.format(album_title, album_id),
-                                      msg2='with {} items'.format(len(photo_dict)))
+        self.logger.info('Updating DB album "{}" with {} items.'.format(album_title, len(photo_dict)))
+        self.progress(msg1='Updating DB album "{}"'.format(album_title),
+                      msg2='with {} items'.format(len(photo_dict)))
 
         self.logger.debug('Loop over photos; add to db')
         for photo_id, photo in photo_dict.items():
             self.db.write_flickr_photo(dict_photo=photo, table=album_id)
 
-        self.logger.info('Add photos to album at Flickr')
-        self.progress(msg2='Add photos to album at Flickr')
+        self.logger.info('Updating Flickr album "{}" with {} items'.format(album_title, len(photo_dict)))
+        self.progress(msg1='Updating Flickr album "{}"'.format(album_title),
+                      msg2='with {} items'.format(len(photo_dict)))
 
         query = "SELECT id FROM '{}' ORDER BY date_taken ASC".format(album_id)
         rsp = self.db.sql(query)

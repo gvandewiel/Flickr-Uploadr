@@ -14,8 +14,13 @@ function set_thread(int){
 
 eel.expose(js_pre)
 function js_pre(str) {
-	$('#output').prepend(str+'</br>');
-	$('#output').scrollTop = $('#output').scrollHeight;
+	//$('#output').prepend(str+'</br>');
+	//$('#output').scrollTop = $('#output').scrollHeight;
+
+  $('#output').append(str+'</br>');
+  var psconsole = $('#output');
+    if(psconsole.length)
+       psconsole.scrollTop(psconsole[0].scrollHeight - psconsole.height());
 }
 
 eel.expose(poll)

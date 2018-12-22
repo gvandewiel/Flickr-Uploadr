@@ -18,9 +18,12 @@ CHECKSUM_PATTERN = "[0-9a-f]{32,40}"
 MD5_MACHINE_TAG_PREFIX = "checksum:md5="
 SHA1_MACHINE_TAG_PREFIX = "checksum:sha1="
 
-def create_logger(name):
-    # Setup logging
-    handler = logging.StreamHandler()
+def create_logger(name, handler=None):
+    # Create handler if None
+    if not handler:
+        handler = logging.StreamHandler()
+
+    # Setup log format
     formatter = logging.Formatter('%(name)-15s %(levelname)-8s %(message)s')
     handler.setFormatter(formatter)
 

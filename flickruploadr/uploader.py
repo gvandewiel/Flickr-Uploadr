@@ -1,5 +1,7 @@
 from . import common
 from time import sleep
+import flickrapi
+import os
 
 class Uploader(object):
     """Uploader class for FlickrCore
@@ -18,7 +20,7 @@ class Uploader(object):
         return d
 
     def callback(self, progress):
-        print('\rUploading: {:3}%'.format(progress))
+        print('Uploading: {:3}%'.format(progress), end='\r')
         self.progress(upload_progress=progress)
 
     def _check_size(self,fname, file):
@@ -30,7 +32,7 @@ class Uploader(object):
             self.logger.warning('Filesize of photo exceeds Flickr limit (200 MB)')
 
             self.progress(msg1='Upload failed.',
-                                                       msg2='Filesize of photo exceeds Flickr limit (200 MB)')
+                          msg2='Filesize of photo exceeds Flickr limit (200 MB)')
             return False
 
         if common.normalize(file.rsplit(".", 1)[-1]) in self.video_ext and b >= 1073741824:
@@ -38,7 +40,7 @@ class Uploader(object):
             self.logger.warning('Filesize of video exceeds Flickr limit (1 GB)')
 
             self.progress(msg1='Upload failed.',
-                                                       msg2='Filesize of video exceeds Flickr limit (1 GB)')
+                          msg2='Filesize of video exceeds Flickr limit (1 GB)')
             return False
         return True
 
@@ -49,7 +51,7 @@ class Uploader(object):
         Max filesize for videos   =   1 GB
         """
 
-                            # Generate machine tags
+        # Generate machine tags
         tags = '{md5_prefix}{md5} {sha1_prefix}{sha1}'.format(md5_prefix=common.MD5_MACHINE_TAG_PREFIX,
                                                               sha1_prefix=common.SHA1_MACHINE_TAG_PREFIX,
                                                               md5=real_md5,
@@ -85,7 +87,7 @@ class Uploader(object):
                     # Wait until flickr has processed file
                     while True:
                         wcnt += 1
-                        ret = self.photos.find_flickr_photo(md5=md5)
+                        ret = self.photos.find_flickr(md5=md5)
                         self.logger.debug('Waiting for Flickr response ({}s)'.format(wcnt))
 
                         self.progress(msg2='Waiting for Flickr response ({}s)'.format(wcnt))

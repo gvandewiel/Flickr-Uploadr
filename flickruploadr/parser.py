@@ -19,6 +19,10 @@ class Parser(object):
         will exit without any action. If update is True the databse will
         be updated and the function will exit."""
 
+        self.public = public
+        self.family = family
+        self.friends = friends
+
         if not main_dir and not update:
             self.logger.warning('No directory or update parameter passed.\nExiting...')
             self.progress(exitFlag=True)
@@ -88,6 +92,7 @@ class Parser(object):
                 album_title = os.path.basename(dirname)
 
             # Message in CLI to show which folder is being processed
+            print('')
             self.logger.info('Processing: {} ({} files)'.format(album_title, img_cnt))
             self.progress(total_images=img_cnt)
 
@@ -107,8 +112,8 @@ class Parser(object):
                 photo_dict = self.db.retrieve_album_photos(album_id)
 
                 self.progress(album=album_title,
-                                              total_images=img_cnt,
-                                              album_id=album_id)
+                              total_images=img_cnt,
+                              album_id=album_id)
             else:
                 photo_dict = {}
 
@@ -166,13 +171,19 @@ class Parser(object):
             # Process subdir "dirname" and corresponding files "filelist"
             self.__proc_subdir__(dirname, filelist)
 
+            self.logger.debug(self.progress.dict)
+
             # Check for an exifFlag to exit the dir loop
             if self.progress.dict['stop'] is True:
+                print('')
                 self.logger.warning('ExitFlag recieved')
                 self.logger.warning('Breaking out file loop')
                 self.progress(msg1='ExitFlag recieved',
                               msg2='Breaking out file loop...')
                 break
+            else:
+                # Clear output dict
+                self.progress.clear()
 
         self.logger.info('Finished processing all local folders')
         self.progress(msg1='Finished processing all local folders')
@@ -202,9 +213,6 @@ class Parser(object):
 
                 # Album management
                 self.__album__(album_id, album_title, photo_dict)
-
-                # Clear output dict
-                self.progress.clear()
 
     def __photos__(self, dirname, photo_dict, filtered_file_list):
 
@@ -244,7 +252,7 @@ class Parser(object):
 
                 # Start upload of new photo
                 if not self.dry_run:
-                    photo_id, photo = self.uploader(fname, file, real_md5, real_sha1, public, family, friends)
+                    photo_id, photo = self.uploader(fname, file, real_md5, real_sha1, self.public, self.family, self.friends)
 
                 # If photo is correctly uploaded a photo_id is provided by Flickr
                 if photo_id is not False:
@@ -254,8 +262,8 @@ class Parser(object):
 
                     # Add newly uploaded photo to photolist
                     self.logger.debug('Adding photo to dict after upload')
-                    self.logger.debug(self.photo_to_dict(photo), photo_dict)
-                    photo_dict = self.photos.add_to_album(self.photos.photo_to_dict(photo), photo_dict)
+                    self.logger.debug(self.photos.to_dict(photo), photo_dict)
+                    photo_dict = self.photos.to_album(self.photos.to_dict(photo), photo_dict)
 
             # Photo already uploaded
             elif photo_id is not False:
@@ -269,6 +277,7 @@ class Parser(object):
 
             'Check for an exifFlag to exit the file loop'
             if self.progress.dict['stop'] is True:
+                print('')
                 self.logger.warning('ExitFlag recieved')
                 self.logger.warning('Breaking out file loop')
 
