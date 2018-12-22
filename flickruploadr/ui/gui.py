@@ -3,19 +3,26 @@ import logging
 import os
 import configparser
 import eel
-from flickruploadr import Uploadr
+from flickruploadr.core import FlickrCore
+import flickruploadr.common as common
 
-class LogHandler(logging.Handler):
+class GuiLogHandler(logging.Handler):
+    def __init__(self):
+        logging.Handler.__init__(self)
     def emit(self, record):
-        log_entry = self.format(record)
-        eel.js_pre(log_entry)
+        record = self.format(record)
+        try:
+            eel.js_pre(record)
+        except AttributeError:
+            pass
 
 
 @eel.expose
 def proc_iput(post_data):
     threads = dict()
     nargs = {}
-    print(post_data)
+    logger.debug(post_data)
+
     nargs['main_dir'] = post_data['main_dir']
     nargs['subdir'] = post_data['subdir']
     nargs['public'] = post_data['public']
@@ -26,9 +33,9 @@ def proc_iput(post_data):
     username = post_data['username']
     method = post_data['action']
 
-    print(username)
-    print(method)
-    print(nargs)
+    logger.debug(username)
+    logger.debug(method)
+    logger.debug(nargs)
 
     thread_id = startThread(username=username, method=method, nargs=nargs)
     eel.set_thread(thread_id)
@@ -46,13 +53,20 @@ def startThread(username='', method='', nargs=None):
     # Set arguments for target function as keyword paramters
     if username != '' and method != '' and nargs is not None:
         thread_id += 1
-        exporting_threads[thread_id] = Uploadr(user=username,
-                                               method=method,
-                                               mkwargs=nargs)
+        exporting_threads[thread_id] = FlickrCore(user=username,
+                                                  method=method,
+                                                  dry_run=False,
+                                                  mkwargs=nargs)
+
         # Set thread as non-deamon to prevent the usage of join
         # Furhtermore it allows to see the progress while stopping a thread
         exporting_threads[thread_id].setDaemon(False)
         exporting_threads[thread_id].start()
+
+        for key in logging.Logger.manager.loggerDict.keys():
+            if 'Flickr' in key:
+                logging.getLogger(key).addHandler(handler)
+
         eel.poll(thread_id)
         return thread_id
     else:
@@ -62,8 +76,8 @@ def startThread(username='', method='', nargs=None):
 @eel.expose
 def stop_thread(thread_id):
     global exporting_threads
-    print('Stopping thread_id {}'.format(thread_id))
-    exporting_threads[thread_id].progress['stop'] = True
+    logger.info('Stopping thread_id {}'.format(thread_id))
+    exporting_threads[thread_id].progress.dict['stop'] = True
 
 
 @eel.expose
@@ -86,21 +100,21 @@ def get_user(username):
         configuration['dirs'] = sorted([f for f in os.listdir(config.get(username, 'root_dir')) if not f.startswith('.')], key=lambda f: f.lower())
     else:
         configuration = False
-    print(configuration)
+    logger.debug(configuration)
     return configuration
 
 
 @eel.expose
 def dirlist(main_dir):
     dirs = sorted([f for f in os.listdir(main_dir) if not f.startswith('.')], key=lambda f: f.lower())
-    print(dirs)
+    logger.debug(dirs)
     return dirs
 
 
 @eel.expose
 def update_monitor(thread_id):
     global exporting_threads
-    progress = exporting_threads[thread_id].progress
+    progress = exporting_threads[thread_id].progress.dict
     try:
         progress['pb_albums'] = int((progress['actual_album'] / progress['total_albums']) * 100)
     except:
@@ -115,36 +129,25 @@ def update_monitor(thread_id):
 def main():
     """Main console function."""
 
-    print('Running Flickr Uploader from {}'.format(os.getcwd()))
+    global logger
+    global handler
+    formatter = logging.Formatter('%(name)-15s %(levelname)-8s %(message)s')
+    handler = GuiLogHandler()
+    handler.setFormatter(formatter)
+
+    logger = common.create_logger('FlickrGUI', handler=handler)
+
+    logger.info('Running Flickr Uploader from {}'.format(os.getcwd()))
 
     global exporting_threads
     global thread_id
     exporting_threads = {}
     thread_id = 0
 
-    # Reduce amount of output
-    # logging.getLogger('werkzeug').setLevel(logging.ERROR)
-    logging.basicConfig(level=logging.ERROR)
-
-    for key in logging.Logger.manager.loggerDict.keys():
-        logging.getLogger(key).setLevel(logging.ERROR)
-
-    logging.getLogger('FlickrUploader').setLevel(logging.INFO)
-
-    FlickrLogger = logging.getLogger('FlickrUploader')
-    FlickrLogger.setLevel(logging.DEBUG)
-    handler = LogHandler()
-    FlickrLogger.addHandler(handler)
-
-    Flickr2SQLiteLogger = logging.getLogger('Flickr2SQLite')
-    Flickr2SQLiteLogger.setLevel(logging.DEBUG)
-    handler = LogHandler()
-    Flickr2SQLiteLogger.addHandler(handler)
-
     import pkg_resources
 
     web_path = os.path.join(pkg_resources.resource_filename('flickruploadr', 'ui'), 'web')
-    print(web_path)
+    logger.debug(web_path)
     eel.init(web_path)
     eel.start('index.html', size=(600, 650), options={'chromeFlags': ["-incognito"]})
 

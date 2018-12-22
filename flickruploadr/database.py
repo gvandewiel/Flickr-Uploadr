@@ -1,4 +1,3 @@
-import logging
 import re
 import tempfile
 from subprocess import call, Popen, PIPE
@@ -9,32 +8,24 @@ import os
 
 
 class FlickrDatabase():
-    def __init__(self, flickr, out_dict, user):
-        # Export progress values
-        self.progress = {}
+    def __getattr__(self, attr):
+        return getattr(self.flickrcore, attr)
 
-        # Setup logging
-        self.logger = logging.getLogger('Flickr2SQLite')
-        # self.logger.setLevel(logging.INFO)
-
-        # Retrieve overall output dictionary
-        self.out_dict = out_dict
-        self.progress = self.out_dict.add_to_queue(msg1='Updating database...')
-        # Retrieve flickr instance
-        self.logger.info('Starting Flickr instance')
-        self.flickr = flickr
+    def __init__(self, obj):
+        self.flickrcore = obj
+        self.logger = common.create_logger('FlickrDB')
 
         # Start connection to database
-        self.logger.info('Starting database connection')
-        self.progress = self.out_dict.add_to_queue(msg2='Starting database connection')
-        sql_path = os.path.join(os.path.expanduser("~"), 'flickr', str(user) + '_flickr.sqlite')
+        self.logger.info('Starting FlickrDB')
+        self.progress(msg2='Starting FlickrDB')
+        sql_path = os.path.join(os.path.expanduser("~"), 'flickr', str(self.user) + '_flickr.sqlite')
 
         self.connection = sqlite.connect(sql_path, check_same_thread=False)
         self.cursor = self.connection.cursor()
 
         # Setup database tables
         self.logger.info('Create database tables...')
-        self.progress = self.out_dict.add_to_queue(msg2='Creating database tables')
+        self.progress(msg2='Creating database tables')
         self.__setup_photos_table__()
         self.__setup_albums_table__()
 
@@ -58,25 +49,25 @@ class FlickrDatabase():
 
         # Setup two default tables (photos and albums)
         self.logger.info('Setup photos table')
-        self.progress = self.out_dict.add_to_queue(msg2='Setup photos table')
+        self.progress(msg2='Setup photos table')
         self.__setup_photos_table__()
         self.logger.info('Setup albums table')
-        self.progress = self.out_dict.add_to_queue(msg2='Setup albums table')
+        self.progress(msg2='Setup albums table')
         self.__setup_albums_table__()
 
         # Update albums table and create all separate album tables
         self.logger.info('Listing all Flickr sets')
-        self.progress = self.out_dict.add_to_queue(msg2='Listing all Flickr sets')
+        self.progress(msg2='Listing all Flickr sets')
         self.list_albums(update=True)
 
         # Update photos table
         self.logger.info('Listing all Flickr photos')
-        self.progress = self.out_dict.add_to_queue(msg2='Listing all Flickr photos')
+        self.progress(msg2='Listing all Flickr photos')
         self.list_photos()
 
         # Tell the gui that the rebuild has finished
         self.logger.info('Finished updating database')
-        self.progress = self.out_dict.add_to_queue(msg2='Finished updating database')
+        self.progress(msg2='Finished updating database')
         return True
 
     def sql(self, query='', data=''):
@@ -141,21 +132,21 @@ class FlickrDatabase():
             if self.check_hash(md5, 'md5') is False or self.check_hash(sha1, 'sha1') is False:
                 self.logger.info("Malformed tags, downloading photo from flickr")
                 # print(photo_id)
-                self.progress = self.out_dict.add_to_queue(msg1='Malformed tags', msg2='Downloading photo from flickr')
+                self.progress(msg1='Malformed tags', msg2='Downloading photo from flickr')
                 md5, sha1 = self.download_flickr_photo(photo_id)
 
             # Incomplete checksums
             if md5 == '' or sha1 == '':
                 self.logger.info("Incomplete tags, downloading photo from flickr")
                 # print(photo_id)
-                self.progress = self.out_dict.add_to_queue(msg1='Incomplete tags', msg2='Downloading photo from flickr')
+                self.progress(msg1='Incomplete tags', msg2='Downloading photo from flickr')
                 md5, sha1 = self.download_flickr_photo(photo_id)
 
         # No machine tags available
         except:
             self.logger.info("No tags found, downloading photo from flickr")
             # print(photo_id)
-            self.progress = self.out_dict.add_to_queue(msg1='No tags found', msg2='Downloading photo from flickr')
+            self.progress(msg1='No tags found', msg2='Downloading photo from flickr')
             md5, sha1 = self.download_flickr_photo(photo_id)
 
         return md5, sha1
@@ -164,17 +155,17 @@ class FlickrDatabase():
         if type == 'md5':
             if not re.search('^' + common.CHECKSUM_PATTERN + '$', hash):
                 self.logger.info("Malformed MD5")
-                self.progress = self.out_dict.add_to_queue(msg1="The MD5sum ('" + hash + "') was malformed.\n\nIt must be 32 letters long, each one of 0-9 or a-f.")
+                self.progress(msg1="The MD5sum ('" + hash + "') was malformed.\n\nIt must be 32 letters long, each one of 0-9 or a-f.")
                 return False
 
         if type == 'sha1':
             if not re.search('^' + common.CHECKSUM_PATTERN + '$', hash):
                 self.logger.info("Malformed SHA1")
-                self.progress = self.out_dict.add_to_queue(msg1="The SHA1sum ('" + hash + "') was malformed.\n\nIt must be 40 letters long, each one of 0-9 or a-f.")
+                self.progress(msg1="The SHA1sum ('" + hash + "') was malformed.\n\nIt must be 40 letters long, each one of 0-9 or a-f.")
                 return False
 
     def download_flickr_photo(self, photo_id, temp=True, folder=''):
-        self.progress = self.out_dict.add_to_queue(msg1='Downloading photo to determine checksum...')
+        self.progress(msg1='Downloading photo to determine checksum...')
         info_result = self.flickr.photos_getInfo(photo_id=photo_id)
         farm_url = common.info_to_url(info_result, 'o')
 
@@ -185,7 +176,7 @@ class FlickrDatabase():
 
             # Download photo to temporary file
             self.logger.info("Downloading photo from flickr")
-            self.progress = self.out_dict.add_to_queue(msg2='Downloading photo from Flickr')
+            self.progress(msg2='Downloading photo from Flickr')
             p = Popen(["curl", "--location", "-o", f.name, farm_url], stdout=PIPE, stderr=PIPE)
             out, err = p.communicate()
 
@@ -201,18 +192,18 @@ class FlickrDatabase():
                     self.logger.info("Removing old MD5 tag (" + m_md5 + ")")
                     self.flickr.photos.removeTag(tag_id=m_md5)
 
-                    self.logger.info("Setting MD5 tag = " + real_md5sum)
-                    self.flickr.photos.addTags(photo_id=photo_id,
-                                               tags=common.MD5_MACHINE_TAG_PREFIX + real_md5sum)
-
                 if re.search('^' + common.SHA1_MACHINE_TAG_PREFIX, t.attrib['raw']):
                     m_sha1 = t.attrib['id']
                     self.logger.info("Removing old SHA1 tag (" + m_sha1 + ")")
                     self.flickr.photos.removeTag(tag_id=m_sha1)
 
-                    self.logger.info("Setting SHA1 tag = " + real_sha1sum)
-                    self.flickr.photos.addTags(photo_id=photo_id,
-                                               tags=common.SHA1_MACHINE_TAG_PREFIX + real_sha1sum)
+            self.logger.info("Setting MD5 tag = " + real_md5sum)
+            self.flickr.photos.addTags(photo_id=photo_id,
+                                       tags=common.MD5_MACHINE_TAG_PREFIX + real_md5sum)
+
+            self.logger.info("Setting SHA1 tag = " + real_sha1sum)
+            self.flickr.photos.addTags(photo_id=photo_id,
+                                       tags=common.SHA1_MACHINE_TAG_PREFIX + real_sha1sum)
 
             # Remove temporary file
             self.logger.info("Removing temporary file.")
@@ -240,7 +231,7 @@ class FlickrDatabase():
 
             if photo_title == '' and description is not None:
                 self.logger.info('Setting "{}" description ("{}") as title'.format(photo_id, description))
-                self.progress = self.out_dict.add_to_queue(msg2='Setting "{}" description ("{}") as title'.format(photo_id, description))
+                self.progress(msg2='Setting "{}" description ("{}") as title'.format(photo_id, description))
                 photo_title = description
                 self.flickr.photos.setMeta(photo_id=photo_id,
                                            title=photo_title,
@@ -257,7 +248,7 @@ class FlickrDatabase():
             md5, sha1 = self.check_machine_tags(obj_photo)
 
             # Show checksums of photo
-            self.progress = self.out_dict.add_to_queue(md5=md5, sha1=sha1)
+            self.progress(md5=md5, sha1=sha1)
 
             # Determine datetaken from flickr photo
             date_taken = self.flickr_date_taken(obj_photo)
@@ -282,38 +273,38 @@ class FlickrDatabase():
             pass
 
     def write_flickr_album(self, obj_album=None, dict_album=None, update=True, verbose=True):
-        if obj_album is not None:
+        if obj_album:
             album_id = obj_album.attrib['id']
             album_title = obj_album.getchildren()[0].text
             album_photos = obj_album.attrib['photos']
             album_videos = obj_album.attrib['videos']
 
-        if dict_album is not None:
+        if dict_album:
             album_id = dict_album['album_id']
             album_title = dict_album['album_title']
             album_photos = dict_album['album_photos']
             album_videos = dict_album['album_videos']
 
-        self.progress = self.out_dict.add_to_queue(album=album_title, album_id=album_id)
+        self.progress(album=album_title, album_id=album_id)
         # Write album into database
         if verbose:
-            self.logger.info('Add album to albums table')
+            self.logger.debug('Add album to albums table')
             pass
 
         data = (album_id, album_title, album_photos, album_videos)
         query = "INSERT OR REPLACE INTO '{tn}' VALUES ({dl})".format(tn='albums', dl=','.join('?' * len(data)))
         self.sql(query, data)
+
         if verbose:
-            self.logger.info('Retrieve photos for {}'.format(album_title))
-            self.progress = self.out_dict.add_to_queue(msg2='Retrieve photos for {}'.format(album_title))
+            self.logger.info('Retrieve photos for "{}"'.format(album_title))
+            self.progress(msg2='Retrieve photos for "{}"'.format(album_title))
             pass
 
         if update is True:
-            self.logger.info('Updating photos in album "{}"'.format(album_title))
-            self.progress = self.out_dict.add_to_queue(msg2='Updating photos in album "{}"'.format(album_title))
+            self.logger.debug('Updating photos in album "{}"'.format(album_title))
+            self.progress(msg2='Updating photos in album "{}"'.format(album_title))
             update = self.write_photos_to_album(album_id=album_id)
-            self.progress = self.out_dict.clear()
-
+            self.progress.clear()
 
     def write_photos_to_album(self, album_id, per_page=500):
         # Create table for album in the database
@@ -331,7 +322,7 @@ class FlickrDatabase():
         # Retrieve total set photos
         total_set_photos = int(total_set_photos.getchildren()[0].attrib['total'])
 
-        self.progress = self.out_dict.add_to_queue(total_images=total_set_photos, actual_image=0)
+        self.progress(total_images=total_set_photos, actual_image=0)
         # number of photos processed
         photo_count = 0
 
@@ -351,7 +342,7 @@ class FlickrDatabase():
             # Loop over photos from Flickr query
             for photo in photo_elements:
                 photo_count += 1
-                self.progress = self.out_dict.add_to_queue(actual_image=photo_count)
+                self.progress(actual_image=photo_count)
                 # self.logger.debug('Updating album photos {} of {}'.format(photo_count, total_set_photos))
                 print('\tUpdating album photos {} of {}'.format(photo_count, total_set_photos), end='\r')
 
@@ -384,7 +375,7 @@ class FlickrDatabase():
         set_count = 0
 
         # Update GUI
-        self.progress = self.out_dict.add_to_queue(msg2='Updating albums', actual_album=set_count, total_albums=total_albums)
+        self.progress(msg2='Updating albums', actual_album=set_count, total_albums=total_albums)
 
         # Loop over all albums and retrieve ID, title and the number of photo's and video's
         for set_page in range(total_album_pages):
@@ -406,7 +397,7 @@ class FlickrDatabase():
                     pass
 
                 # Update GUI
-                self.progress = self.out_dict.add_to_queue(msg2='Updating albums', actual_album=set_count)
+                self.progress(msg2='Updating albums', actual_album=set_count)
 
                 """Add album to albums table.
                     If update is True, a separate album table will be made
@@ -414,7 +405,7 @@ class FlickrDatabase():
                     The function takes the entire set object as input, al the
                     processing of the information in the object is done in the
                     write_flickr_album function."""
-                self.progress = self.out_dict.add_to_queue(msg1='update sqlite database with album_id')
+                self.progress(msg1='update sqlite database with album_id')
                 self.write_flickr_album(obj_album=set, update=update, verbose=verbose)
             # Page exhausted, goto next page
             set_page += 1
@@ -440,7 +431,7 @@ class FlickrDatabase():
         photo_page = 0
 
         # Update GUI
-        self.progress = self.out_dict.add_to_queue(msg2='Updating photos', actual_image=photo_cnt, total_images=total_photos)
+        self.progress(msg2='Updating photos', actual_image=photo_cnt, total_images=total_photos)
 
         # Loop over all photos
         for photo_page in range(total_photo_pages):
@@ -463,13 +454,13 @@ class FlickrDatabase():
                 print('\tPhoto {} of {}'.format(photo_cnt, total_photos), end='\r')
 
                 # Update GUI
-                self.progress = self.out_dict.add_to_queue(msg1='Updating photos', actual_image=photo_cnt)
+                self.progress(msg1='Updating photos', actual_image=photo_cnt)
 
                 """Add photo to photos table.
                     The function takes the entire set object as input, al the
                     processing of the information in the object is done in the
                     write_flickr_photo function."""
-                self.progress = self.out_dict.add_to_queue(msg1='Update sqlite database with photo_ids')
+                self.progress(msg1='Update sqlite database with photo_ids')
                 self.write_flickr_photo(obj_photo=photo, table='photos')
 
             # Page exhausted, goto next page

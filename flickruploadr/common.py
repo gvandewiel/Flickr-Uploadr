@@ -10,6 +10,7 @@ import os
 import re
 import hashlib
 import unicodedata
+import logging
 from datetime import datetime
 
 
@@ -17,6 +18,20 @@ CHECKSUM_PATTERN = "[0-9a-f]{32,40}"
 MD5_MACHINE_TAG_PREFIX = "checksum:md5="
 SHA1_MACHINE_TAG_PREFIX = "checksum:sha1="
 
+def create_logger(name, handler=None):
+    # Create handler if None
+    if not handler:
+        handler = logging.StreamHandler()
+
+    # Setup log format
+    formatter = logging.Formatter('%(name)-15s %(levelname)-8s %(message)s')
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+
+    return logger
 
 def datestr(date):
     """Return a flat string showing the datetaken from Flickr
