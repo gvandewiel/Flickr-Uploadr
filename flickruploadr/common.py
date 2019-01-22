@@ -95,11 +95,20 @@ def checksum(filename, type, blocksize=65536):
     elif type == "sha1":
         hash = hashlib.sha1()
 
+    b  = bytearray(128*1024)
+    mv = memoryview(b)
+    with open(filename, 'rb', buffering=0) as f:
+        for n in iter(lambda : f.readinto(mv), 0):
+            hash.update(mv[:n])
+    result = hash.hexdigest()
+        
+    '''
     with open(filename, "rb") as f:
         for block in iter(lambda: f.read(blocksize), b""):
             hash.update(block)
         result = hash.hexdigest()
-
+    '''
+    
     m = re.search('^(' + CHECKSUM_PATTERN + ')', result.strip())
     if not m:
         raise Exception("Output from " + type + "sum was unexpected: " + result)
