@@ -6,6 +6,7 @@ import sqlite3 as sqlite
 from . import common
 import os
 
+import asyncio
 
 class FlickrDatabase():
     def __getattr__(self, attr):
@@ -29,7 +30,7 @@ class FlickrDatabase():
         self.__setup_photos_table__()
         self.__setup_albums_table__()
 
-    def rebuild_database(self, local=False):
+    async def rebuild_database(self, local=False):
         if local:
             # Delete all tables in database
             queries = ["PRAGMA writable_schema = 1;",
@@ -50,20 +51,21 @@ class FlickrDatabase():
         # Setup two default tables (photos and albums)
         self.logger.info('Setup photos table')
         self.progress(msg2='Setup photos table')
-        self.__setup_photos_table__()
+        await self.__setup_photos_table__()
+
         self.logger.info('Setup albums table')
         self.progress(msg2='Setup albums table')
-        self.__setup_albums_table__()
+        await self.__setup_albums_table__()
 
         # Update albums table and create all separate album tables
         self.logger.info('Listing all Flickr sets')
         self.progress(msg2='Listing all Flickr sets')
-        self.list_albums(update=True)
+        await self.list_albums(update=True)
 
         # Update photos table
         self.logger.info('Listing all Flickr photos')
         self.progress(msg2='Listing all Flickr photos')
-        self.list_photos()
+        await self.list_photos()
 
         # Tell the gui that the rebuild has finished
         self.logger.info('Finished updating database')
@@ -75,13 +77,15 @@ class FlickrDatabase():
         self.connection.commit()
         return self.cursor
 
-    def __setup_photos_table__(self):
+    async def __setup_photos_table__(self):
         query = "CREATE TABLE IF NOT EXISTS photos (id INT, photo_title TEXT, md5 TEXT, sha1 TEXT, public INT, friend INT, family INT, date_taken TEXT, PRIMARY KEY(id))"
         self.sql(query)
+        await asyncio.sleep(0)
 
-    def __setup_albums_table__(self):
+    async def __setup_albums_table__(self):
         query = "CREATE TABLE IF NOT EXISTS albums (id INT, album_title TEXT, photos INT, videos INT, PRIMARY KEY(id))"
         self.sql(query)
+        await asyncio.sleep(0)
 
     def create_album_table(self, album_id):
         # Delete existing ablum table
@@ -306,7 +310,7 @@ class FlickrDatabase():
             update = self.write_photos_to_album(album_id=album_id)
             self.progress.clear()
 
-    def write_photos_to_album(self, album_id, per_page=500):
+    async def write_photos_to_album(self, album_id, per_page=500):
         # Create table for album in the database
         self.create_album_table(album_id)
 
@@ -325,7 +329,7 @@ class FlickrDatabase():
         self.progress(total_images=total_set_photos, actual_image=0)
         # number of photos processed
         photo_count = 0
-
+        await asyncio.sleep(0)
         # Loop over all album photos
         for photo_page in range(total_photo_pages):
             # Overcome 0-based indexing
@@ -342,7 +346,7 @@ class FlickrDatabase():
             # Loop over photos from Flickr query
             for photo in photo_elements:
                 photo_count += 1
-                self.progress(actual_image=photo_count)
+                self.progress(actual_image=photo_count, total_images=total_set_photos)
                 # self.logger.debug('Updating album photos {} of {}'.format(photo_count, total_set_photos))
                 print('\tUpdating album photos {} of {}'.format(photo_count, total_set_photos), end='\r')
 
@@ -351,12 +355,12 @@ class FlickrDatabase():
                 processing of the information in the object is done in the
                 write_flickr_photo function."""
                 self.write_flickr_photo(obj_photo=photo, table=album_id)
-
+                await asyncio.sleep(0)
             # Page exhausted, goto next page
             photo_page += 1
         # print('\n')
 
-    def list_albums(self, per_page=500, update=True, verbose=True):
+    async def list_albums(self, per_page=500, update=True, verbose=True):
         if verbose:
             self.logger.info('Updating albums')
             pass
@@ -376,6 +380,8 @@ class FlickrDatabase():
 
         # Update GUI
         self.progress(msg2='Updating albums', actual_album=set_count, total_albums=total_albums)
+
+        await asyncio.sleep(0)
 
         # Loop over all albums and retrieve ID, title and the number of photo's and video's
         for set_page in range(total_album_pages):
@@ -407,13 +413,15 @@ class FlickrDatabase():
                     write_flickr_album function."""
                 self.progress(msg1='update sqlite database with album_id')
                 self.write_flickr_album(obj_album=set, update=update, verbose=verbose)
+                
+                await asyncio.sleep(0)
             # Page exhausted, goto next page
             set_page += 1
         if verbose:
             self.logger.info('Finished updating albums')
             pass
 
-    def list_photos(self, per_page=500):
+    async def list_photos(self, per_page=500):
         # Retrieve total number of photo's in Flickr database
         total_photos = self.flickr.photos_search(user_id="me",
                                                  per_page=str(per_page),
@@ -432,6 +440,8 @@ class FlickrDatabase():
 
         # Update GUI
         self.progress(msg2='Updating photos', actual_image=photo_cnt, total_images=total_photos)
+
+        await asyncio.sleep(0)
 
         # Loop over all photos
         for photo_page in range(total_photo_pages):
@@ -462,6 +472,8 @@ class FlickrDatabase():
                     write_flickr_photo function."""
                 self.progress(msg1='Update sqlite database with photo_ids')
                 self.write_flickr_photo(obj_photo=photo, table='photos')
+                
+                await asyncio.sleep(0)
 
             # Page exhausted, goto next page
             photo_page += 1

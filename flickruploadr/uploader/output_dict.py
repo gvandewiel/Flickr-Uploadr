@@ -4,6 +4,7 @@ Dictionary used to store all variables for progress
 monitoring in GUI.
 """
 
+import asyncio
 
 class OutDict():
     """Summary
@@ -14,7 +15,7 @@ class OutDict():
         queue (TYPE): queue object
     """
 
-    def __init__(self, queue=None):
+    async def __init__(self, queue=None):
         """Summary
 
         Args:
@@ -41,7 +42,7 @@ class OutDict():
                          }
 
         if queue is not None:
-            self.queue.put(self.dict)
+            await self.queue.put(self.dict)
 
     def __call__(self, **kwargs):
         """Add **kwargs to dictionary

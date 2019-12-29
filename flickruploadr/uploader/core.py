@@ -42,7 +42,7 @@ class FlickrCore(threading.Thread):
         'Uploads a single photo / video to flickr'
         self.uploader = Uploader(self)
 
-    def __init__(self, user=None, queue=None, method='', dry_run=False, mkwargs=''):
+    async def __init__(self, user=None, queue=None, method='', dry_run=False, mkwargs=''):
         """Summary
 
         Args:
@@ -69,12 +69,12 @@ class FlickrCore(threading.Thread):
 
         'Start logger'
         'Prepare output dictionary'
-        self.logger, self.progress = self.__prep_logging__(queue)
+        self.logger, self.progress = await self.__prep_logging__(queue)
 
         'Read configuration file'
         'Return dict with configuration data'
         configuration = self.__read_config__(user)
-
+        print(configuration)
         'Start FlickrAPI'
         self.flickr = self.__start_flickr__(configuration)
 
@@ -87,11 +87,21 @@ class FlickrCore(threading.Thread):
         self.set_log_level('INFO')
 
     def __del__(self):
+        """Delete attribute of FlickrCore"""
         self.progress(msg1='Uploadr Thread died...')
         self.logger.info('Uploadr Thread died...')
         self.progress(exitFlag=True)
 
-    def __prep_logging__(self, queue):
+    async def __prep_logging__(self, queue):
+        """Prepare logger for FlickrCore
+
+        Args:
+            queue (None, optional): Description
+        
+        Returns:
+            logger: FlickrCore logger
+            progress: Dictionary with progress data
+        """
         logger = common.create_logger('FlickrCore')
 
         # Setup output dictionary
@@ -101,7 +111,7 @@ class FlickrCore(threading.Thread):
             queue = Queue()
 
         logger.info('FlickrUpload: Starting output_dictionary')
-        progress = OutDict(queue)
+        progress = await OutDict(queue)
         progress.clear()
 
         return logger, progress
@@ -118,6 +128,19 @@ class FlickrCore(threading.Thread):
                         logging.getLogger(key).setLevel(logging.DEBUG)
 
     def __read_config__(self, user):
+        """Read config file
+
+        Reads config file to retrieve user data:
+            + API key
+            + API secret
+            + Root dir (where to search for photos)
+
+        Args:
+            user: Username to search for
+
+        Returns:
+            configuration: Dictionary with the above mentiond data
+        """
         # Retrieve configuration
         self.logger.debug('Reading configuration file')
         configuration = {}
@@ -148,18 +171,31 @@ class FlickrCore(threading.Thread):
         return configuration
 
     def __start_flickr__(self, configuration):
-        self.logger.info('Starting FlickrAPI')
-        self.progress(msg1='Starting FlickrAPI')
+        """Create Flickr object
 
-        flickr = flickrapi.FlickrAPI(configuration['api_key'],
-                                     configuration['api_secret'])
+        Used to communicate with the Flickr server
 
+        Args:
+            configuration: Configuration dictionary
+
+        Returns:
+            flickr: flickrapi object
+        """
         try:
-            flickr.authenticate_via_browser(perms='delete')
+            self.logger.info('Starting FlickrAPI')
+            self.progress(msg1='Starting FlickrAPI')
+
+            flickr = flickrapi.FlickrAPI(configuration['api_key'],
+                                        configuration['api_secret'])
+
+            try:
+                flickr.authenticate_via_browser(perms='delete')
+            except:
+                pass
         except:
             del flickr
             flickr = flickrapi.FlickrAPI(configuration['api_key'],
-                                              configuration['api_secret'])
+                                            configuration['api_secret'])
 
             flickr.get_request_token(oauth_callback='oob')
 
@@ -169,20 +205,23 @@ class FlickrCore(threading.Thread):
 
             verifier = str(input('Verifier code: '))
             flickr.get_access_token(verifier)
-
+        
         return flickr
 
-    def run(self):
+    async def run(self):
+        """Method used to start the actual process"""
+
+        
         if self.method == 'update_remote':
             self.logger.debug('Running Uploadr => remote_update')
-            self.parser(**self.mkwargs)
+            await self.parser(**self.mkwargs)
 
         elif self.method == 'update_db':
             self.logger.debug('Running Uploadr => update_db')
             self.logger.info('Rebuilding database')
 
             self.progress(msg1='Rebuilding database')
-            self.db.rebuild_database()
+            await self.db.rebuild_database()
 
             self.progress.clear()
 
